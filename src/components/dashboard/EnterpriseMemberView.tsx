@@ -336,34 +336,10 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     return [];
   }, [currentSub.companyId, currentSub.id]);
 
-  // Mode compact (sans bannière) :
-  // - Ne dépend JAMAIS du profil ou du type d'utilisateur (créateur, membre, abonné, gratuit).
-  // - Déterminé AUTOMATIQUEMENT en fonction de la quantité et du type d'éléments présents à l'écran,
-  //   afin d'alléger l'interface lorsque cela est nécessaire pour optimiser l'espace sans modifier les fonctionnalités.
+  // La bannière est affichée par défaut. Le mode compact est activé uniquement
+  // lorsque l'utilisateur le demande explicitement via le bouton dédié.
   const [manualCompactOverride, setManualCompactOverride] = useState<boolean | null>(null);
-
-  const isAutoCompactActive = React.useMemo(() => {
-    // 1. Types de vues nécessitant une surface verticale utile maximale (outils, chat telegram/discord, cours, assistance)
-    if (activeTab === "telegram" || activeTab === "discord" || activeTab === "cours" || activeTab === "support") {
-      return true;
-    }
-    // 2. Vue catalogue de produits lorsqu'il y a plus de 1 offre ou produit affiché
-    if (companyTab === "produits" && enterpriseOffers.length > 1) {
-      return true;
-    }
-    // 3. Vue avis ou listes denses
-    if (companyTab === "avis") {
-      return true;
-    }
-    // 4. Quantité d'éléments denses sur l'écran (offres + canaux telegram + apps incluses)
-    const totalScreenElements = enterpriseOffers.length + (currentSub.telegramChannels?.length || 0) + (currentSub.includedApps?.length || 0);
-    if (totalScreenElements > 3) {
-      return true;
-    }
-    return false;
-  }, [activeTab, companyTab, enterpriseOffers.length, currentSub.telegramChannels, currentSub.includedApps]);
-
-  const isCompact = manualCompactOverride !== null ? manualCompactOverride : isAutoCompactActive;
+  const isCompact = manualCompactOverride === true;
 
   // Helper pour récupérer l'offre réelle correspondante
   const getOfferForFeature = (featureKey: string): CreatorPlatformOffer => {
@@ -2207,20 +2183,6 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
               {/* VUE CONTENU : ONGLET PRODUITS */}
               {companyTab === "produits" && (
                 <div className="space-y-6 animate-in fade-in duration-150 max-w-5xl">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <ShoppingBag className="size-5 text-amber-400" />
-                        <span>Offres & Produits de {subscription.companyName}</span>
-                      </h3>
-                      <p className="text-xs text-zinc-400">
-                        {hasPaidOffer
-                          ? "Vous avez accès aux offres que vous avez souscrites. Les autres offres de l'entreprise restent verrouillées jusqu'à leur achat."
-                          : "Vous êtes membre de l'entreprise sans offre payée (accès gratuit à l'accueil et au support). Choisissez une offre ci-dessous pour débloquer les canaux et services."}
-                      </p>
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {enterpriseOffers.length === 0 ? (
                       <div className="col-span-1 md:col-span-2 py-12 px-6 rounded-2xl border border-white/10 bg-[#111318] text-center space-y-3">

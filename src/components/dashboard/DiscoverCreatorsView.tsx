@@ -186,8 +186,8 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   
-  // Mode compact (sans bannière) déterminé automatiquement en fonction de la quantité et du type d'éléments présents à l'écran
-  const [userCompactPreference, setUserCompactPreference] = useState<boolean | null>(null);
+  // Les bannières sont affichées par défaut ; le mode compact est manuel.
+  const [userCompactPreference, setUserCompactPreference] = useState(false);
 
   const categories = [
     { id: "all", label: "Toutes les entreprises" },
@@ -209,9 +209,7 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
     return matchesCat && matchesSearch;
   });
 
-  // Détermination automatique du mode compact : activé dès qu'il y a plus de 2 entreprises affichées ou en mode recherche
-  const isAutoCompactActive = filteredEnterprises.length > 2 || searchQuery.trim().length > 0;
-  const isCompact = userCompactPreference !== null ? userCompactPreference : isAutoCompactActive;
+  const isCompact = userCompactPreference;
   const showBanners = !isCompact;
 
   const handleEnterpriseClick = (ent: CreatorEnterpriseCard) => {

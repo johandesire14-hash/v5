@@ -706,19 +706,6 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               </div>
             </div>
 
-            {/* 4. Volume Brut Encaissé */}
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-5 space-y-2">
-              <div className="flex items-center justify-between text-xs text-zinc-400">
-                <span className="font-semibold text-zinc-300">Volume Brut Encaissé</span>
-                <DollarSign className="size-4 text-zinc-400" />
-              </div>
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight">
-                {formatCurrency(balance.totalGrossVolume, activeCurrency)}
-              </div>
-              <p className="text-[11px] text-zinc-500 leading-tight">
-                Total des ventes brutes générées pour ce contexte.
-              </p>
-            </div>
           </div>
 
           {/* DÉCOMPOSITION DU SOLDE SELON LE CONTEXTE */}

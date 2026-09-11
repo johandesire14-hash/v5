@@ -1880,35 +1880,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                         {formatCurrency(activeBalance, currency)}
                       </div>
                     </div>
-                    {!isCompanyContext && currency !== "USD" && (
-                      <div className="text-xs text-zinc-400 font-mono pt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span>≈ ${formattedActiveBalance} $US</span>
-                        <span>·</span>
-                        <span className="text-[#00D26A]">
-                          1 USD = {SUPPORTED_CURRENCIES[currency].rateToUSD} {SUPPORTED_CURRENCIES[currency].symbol}
-                        </span>
-                        <span className="text-zinc-600">·</span>
-                        <span className="text-zinc-500 text-[11px]">
-                          Solde consolidé Mansa
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Breakdown contextuel sous le solde */}
-                    {!isCompanyContext && (
-                      <div className="pt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                        <span className="text-zinc-400">Détail :</span>
-                        <span className="px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-zinc-300 font-mono">
-                          Entreprises: <strong>{formatCurrency(personalBreakdown.companies, currency)}</strong>
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-mono">
-                          Affiliation: <strong>{formatCurrency(personalBreakdown.affiliates, currency)}</strong>
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-mono">
-                          Autres: <strong>{formatCurrency(personalBreakdown.other, currency)}</strong>
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Minimalist Line Chart with Wavy Curve and Baseline (Matching Screenshot) */}
