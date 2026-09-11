@@ -393,6 +393,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
+                <label className="block text-zinc-300 font-semibold mb-1">Nom de l'entreprise</label>
+                <input
+                  type="text"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                  placeholder="Nom de l'entreprise"
+                  className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                  required
+                />
+              </div>
+
+              <div>
                 <label className="block text-zinc-300 font-semibold mb-1">Email du support client</label>
                 <input
                   type="email"
@@ -486,17 +498,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] text-zinc-400 mb-1">URL de l'image de bannière</label>
-                <input
-                  type="url"
-                  value={companyBanner}
-                  onChange={(e) => setCompanyBanner(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-white/10 bg-[#0d0e12] p-2.5 text-xs font-mono text-zinc-200 outline-none focus:border-[#00D26A]"
-                />
-              </div>
-
               {/* Quick Presets for Banner */}
               <div className="space-y-1.5">
                 <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider block">
@@ -567,17 +568,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span>Téléverser une photo</span>
                   </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-zinc-400 mb-1">URL de la photo ou du logo</label>
-                <input
-                  type="url"
-                  value={companyLogo}
-                  onChange={(e) => setCompanyLogo(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-white/10 bg-[#0d0e12] p-2.5 text-xs font-mono text-zinc-200 outline-none focus:border-[#00D26A]"
-                />
               </div>
 
               {/* Quick Presets for Logo */}
@@ -805,5 +795,4 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     </div>
   );
 };
-
 
