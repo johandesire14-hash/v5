@@ -52,8 +52,6 @@ import {
   GraduationCap,
   TrendingUp,
   Layers,
-  Maximize2,
-  Minimize2,
 } from "lucide-react";
 import { EnterpriseSubscription, TelegramChannelItem, DiscordChannelItem } from "../../types";
 import { TelegramIcon, DiscordIcon } from "./ConnectedAppsView";
@@ -336,10 +334,19 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     return [];
   }, [currentSub.companyId, currentSub.id]);
 
-  // La bannière est affichée par défaut. Le mode compact est activé uniquement
-  // lorsque l'utilisateur le demande explicitement via le bouton dédié.
-  const [manualCompactOverride, setManualCompactOverride] = useState<boolean | null>(null);
-  const isCompact = manualCompactOverride === true;
+  // Le mode compact est automatique sur les écrans étroits et complet sur desktop.
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    const handleViewportChange = (event: MediaQueryListEvent) => setIsCompact(event.matches);
+
+    setIsCompact(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+    return () => mediaQuery.removeEventListener("change", handleViewportChange);
+  }, []);
 
   // Helper pour récupérer l'offre réelle correspondante
   const getOfferForFeature = (featureKey: string): CreatorPlatformOffer => {
@@ -1374,18 +1381,8 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                   </div>
                 </div>
 
-                {/* Actions & bascule */}
+                {/* Actions */}
                 <div className="flex items-center gap-2">
-                  {/* Bouton pour afficher la bannière manuellement */}
-                  <button
-                    onClick={() => setManualCompactOverride(false)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-400 hover:text-white text-xs transition-all cursor-pointer"
-                    title="Afficher la bannière complète"
-                  >
-                    <Maximize2 className="size-3.5 text-zinc-400" />
-                    <span className="hidden sm:inline">Afficher bannière</span>
-                  </button>
-
                   {/* Branding button pour créateur propriétaire */}
                   {isCompanyOwner && (
                     <button
@@ -1515,17 +1512,8 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                   {/* Subtle gradient vignette to seamlessly transition to the dark canvas */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b0d] via-[#0a0b0d]/30 to-transparent pointer-events-none" />
 
-                  {/* Boutons en haut à droite : Bascule mode compact & Configurer bannière */}
+                  {/* Bouton de configuration de la bannière */}
                   <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-                    <button
-                      onClick={() => setManualCompactOverride(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-zinc-300 hover:text-white text-xs font-semibold shadow-lg transition-all cursor-pointer active:scale-95"
-                      title="Activer le mode compact (sans bannière pour gagner de l'espace)"
-                    >
-                      <Minimize2 className="size-3.5 text-blue-400" />
-                      <span className="hidden sm:inline">Mode compact</span>
-                    </button>
-
                     {isCompanyOwner && (
                       <button
                         onClick={() => setIsBrandingModalOpen(true)}

@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   ArrowRight,
   Filter,
-  Eye,
-  EyeOff,
   Building2,
   Lock,
   ExternalLink,
@@ -186,8 +184,19 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   
-  // Les bannières sont affichées par défaut ; le mode compact est manuel.
-  const [userCompactPreference, setUserCompactPreference] = useState(false);
+  // Le mode compact est automatique sur les écrans étroits et complet sur desktop.
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    const handleViewportChange = (event: MediaQueryListEvent) => setIsCompact(event.matches);
+
+    setIsCompact(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+    return () => mediaQuery.removeEventListener("change", handleViewportChange);
+  }, []);
 
   const categories = [
     { id: "all", label: "Toutes les entreprises" },
@@ -209,7 +218,6 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
     return matchesCat && matchesSearch;
   });
 
-  const isCompact = userCompactPreference;
   const showBanners = !isCompact;
 
   const handleEnterpriseClick = (ent: CreatorEnterpriseCard) => {
@@ -236,30 +244,6 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
             </p>
           </div>
 
-          {/* Banner visibility toggle with auto status indicator */}
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              onClick={() => setUserCompactPreference(!isCompact)}
-              className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-2 transition-all cursor-pointer"
-              title={isCompact ? "Afficher les bannières" : "Masquer les bannières pour une vue compacte"}
-            >
-              {isCompact ? (
-                <>
-                  <EyeOff className="size-3.5 text-zinc-400" />
-                  <span className="hidden sm:inline">
-                    Mode compact
-                  </span>
-                  <span className="sm:hidden">Compact</span>
-                </>
-              ) : (
-                <>
-                  <Eye className="size-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">Avec bannières</span>
-                  <span className="sm:hidden">Bannières</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
 
         {/* Search and Filters Bar */}
