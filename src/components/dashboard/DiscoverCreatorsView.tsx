@@ -249,7 +249,7 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
                 <>
                   <EyeOff className="size-3.5 text-zinc-400" />
                   <span className="hidden sm:inline">
-                    Mode compact {userCompactPreference === null && "(Auto)"}
+                    Mode compact
                   </span>
                   <span className="sm:hidden">Compact</span>
                 </>

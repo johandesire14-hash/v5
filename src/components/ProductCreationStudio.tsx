@@ -1854,25 +1854,6 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                 {ctaButtonText || "Rejoindre maintenant"}
               </button>
 
-              {/* Included Apps & Integrations Badges (Mobile Preview) */}
-              {selectedApps.length > 0 && (
-                <div className="p-3.5 rounded-2xl bg-[#14161d] border border-white/10 space-y-2">
-                  <span className="text-xs font-bold text-white block">
-                    Ce qui est inclus immédiatement :
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedApps.map((app, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#1a1d27] border border-white/5 text-[11px] text-zinc-200"
-                      >
-                        {renderAppIcon(app, "size-3.5")}
-                        <span className="font-semibold">{app}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
               {digitalFiles.length > 0 &&
                 (selectedApps.includes("Fichiers & Documents") ||
                   selectedApps.includes("Téléchargement instantané") ||
@@ -2074,21 +2055,6 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                     <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
                       {productName}
                     </h1>
-                  </div>
-
-                  {/* Included Apps & Integrations Badges */}
-                  <div className="p-4 rounded-2xl bg-[#14161f] border border-white/10 space-y-2.5">
-                    <span className="text-xs font-bold text-white block">
-                      Ce qui est inclus immédiatement :
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {selectedApps.map((app, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2.5 rounded-xl bg-[#1a1d27] border border-white/5 text-xs text-zinc-200">
-                          {renderAppIcon(app, "size-4")}
-                          <span className="font-semibold">{app}</span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Uploaded Files Section (for E-books and digital items) */}

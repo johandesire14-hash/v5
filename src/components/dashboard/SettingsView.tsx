@@ -588,10 +588,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     {
-                      label: "Insigne Alpha",
-                      url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=300&q=80",
-                    },
-                    {
                       label: "Portrait Dirigeant",
                       url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80",
                     },

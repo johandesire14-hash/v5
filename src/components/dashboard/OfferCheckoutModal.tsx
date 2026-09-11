@@ -464,61 +464,6 @@ export const OfferCheckoutModal: React.FC<OfferCheckoutModalProps> = ({
                 </p>
               </div>
 
-              {/* Included Apps & Integrations Badges */}
-              <div className="p-4 rounded-2xl bg-[#14161f] border border-white/10 space-y-3">
-                <span className="text-xs font-bold text-white block uppercase tracking-wider">
-                  Ce qui est inclus immédiatement :
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#1a1d27] border border-white/5 text-xs text-zinc-200">
-                    <div className="size-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                      <Check className="size-3.5" />
-                    </div>
-                    <div>
-                      <span className="font-semibold block">Espace Entreprise</span>
-                      <span className="text-[10px] text-zinc-400">Page d'accueil & Vitrine membre</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#1a1d27] border border-white/5 text-xs text-zinc-200">
-                    <div className="size-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                      <MessageSquare className="size-3.5" />
-                    </div>
-                    <div>
-                      <span className="font-semibold block">Assistance 24/7</span>
-                      <span className="text-[10px] text-zinc-400">Assistance directe avec l'équipe</span>
-                    </div>
-                  </div>
-
-                  {offer.includedApps.map((app, idx) => {
-                    const isTg = app.toLowerCase().includes("telegram");
-                    const isDc = app.toLowerCase().includes("discord");
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs ${
-                          isTg
-                            ? "bg-[#229ED9]/10 border-[#229ED9]/30 text-white"
-                            : isDc
-                            ? "bg-[#5865F2]/10 border-[#5865F2]/30 text-white"
-                            : "bg-[#1a1d27] border-white/5 text-zinc-200"
-                        }`}
-                      >
-                        <div className={`size-6 rounded-lg flex items-center justify-center shrink-0 ${
-                          isTg ? "bg-[#229ED9] text-white" : isDc ? "bg-[#5865F2] text-white" : "bg-white/10 text-emerald-400"
-                        }`}>
-                          {isTg ? <TelegramIcon className="size-3.5" /> : isDc ? <DiscordIcon className="size-3.5" /> : <Zap className="size-3" />}
-                        </div>
-                        <div>
-                          <span className="font-semibold block">{app}</span>
-                          <span className="text-[10px] text-zinc-400">Option VIP activée après achat</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* FAQ Section Accordion */}
               <div className="space-y-2.5 pt-2">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider">

@@ -407,25 +407,6 @@ export const CustomerPurchasesView: React.FC<CustomerPurchasesViewProps> = ({
                       </div>
                     </div>
                   </div>
-
-                  {/* Badges of apps inside this business */}
-                  <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-white/[0.04]">
-                    {item.hasTelegramApp && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#229ED9]/15 text-[#229ED9]">
-                        <TelegramIcon className="size-3" /> Telegram
-                      </span>
-                    )}
-                    {item.hasDiscordApp && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#5865F2]/15 text-[#8c97f8]">
-                        <DiscordIcon className="size-3" /> Discord
-                      </span>
-                    )}
-                    {item.hasFilesApp && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/5 text-zinc-300">
-                        📁 Fichiers
-                      </span>
-                    )}
-                  </div>
                 </div>
               );
             })}

@@ -941,7 +941,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
               </div>
             </div>
           </div>
-          {isMobile ? (
+          {isMobile && (
             <button
               onClick={() => setIsMobileSidebarOpen(false)}
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
@@ -949,16 +949,6 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
             >
               <X className="size-4" />
             </button>
-          ) : (
-            onBackToPersonal && (
-              <button
-                onClick={onBackToPersonal}
-                className="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-colors cursor-pointer font-medium"
-                title="Quitter et revenir à l'espace créateur"
-              >
-                Quitter
-              </button>
-            )
           )}
         </div>
 
@@ -1646,19 +1636,6 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
                 {/* Des icônes d'action et de gestion alignées à l'extrême droite */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 self-start sm:self-end pt-1 sm:pt-0">
-                  {/* Share button */}
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      setCopiedProfileShare(true);
-                      setTimeout(() => setCopiedProfileShare(false), 2500);
-                    }}
-                    className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/[0.08] text-zinc-300 hover:text-white transition-all cursor-pointer shadow-sm min-h-[40px] min-w-[40px] flex items-center justify-center"
-                    title="Partager le profil de l'entreprise"
-                  >
-                    <Share2 className="size-4" />
-                  </button>
-
                   {/* Notifications bell */}
                   <button
                     onClick={() => setIsNotifSubscribed(!isNotifSubscribed)}
@@ -1673,15 +1650,6 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     {isNotifSubscribed && (
                       <span className="absolute top-2 right-2 size-1.5 rounded-full bg-blue-400" />
                     )}
-                  </button>
-
-                  {/* Direct Contact / Support Message */}
-                  <button
-                    onClick={() => setActiveTab("support")}
-                    className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 hover:text-white transition-all cursor-pointer shadow-sm"
-                    title="Écrire à l'équipe support"
-                  >
-                    <MessageSquare className="size-4" />
                   </button>
 
                   {/* Menu « ⋮ » de la page d'accueil de l'entreprise */}
@@ -1763,7 +1731,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                       className="ml-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-[0.99] text-black text-xs font-bold tracking-wide flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/25"
                     >
                       <Sparkles className="size-3.5 text-black" />
-                      <span>Débloquer les offres</span>
+                      <span>Rejoindre</span>
                       <ChevronRight className="size-3.5 text-black" />
                     </button>
                   )}
@@ -1866,29 +1834,6 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                         <span>Rejoindre gratuitement</span>
                       </button>
                     </div>
-                  </div>
-                ) : !hasPaidOffer ? (
-                  <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-zinc-900/60 to-transparent border border-amber-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-                    <div className="flex items-start sm:items-center gap-3">
-                      <div className="size-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
-                        <Lock className="size-5" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-bold text-white">
-                          <span>Adhésion membre simple active (Sans offre payée)</span>
-                        </div>
-                        <p className="text-xs text-zinc-400 max-w-2xl leading-relaxed">
-                          Vous avez rejoint l'entreprise <strong>{subscription.companyName}</strong>. Vous avez accès à la page d'accueil et à l'assistance. Pour débloquer les canaux Telegram VIP, le serveur Discord ou les formations, souscrivez à une offre.
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setCompanyTab("produits")}
-                      className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md flex items-center gap-1.5"
-                    >
-                      <ShoppingBag className="size-3.5 text-black" />
-                      <span>Voir les offres</span>
-                    </button>
                   </div>
                 ) : null}
               </div>
@@ -3819,4 +3764,3 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     </div>
   );
 };
-

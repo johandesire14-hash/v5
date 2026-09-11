@@ -412,25 +412,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     <span className="text-[11px] font-mono text-zinc-400 uppercase">
                       {proj.category}
                     </span>
-
-                    <div className="flex items-center gap-1.5">
-                      {proj.status === "active" ? (
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-[#00D26A]">
-                          <span className="size-1.5 rounded-full bg-[#00D26A] animate-pulse" />
-                          <span>Actif</span>
-                        </span>
-                      ) : proj.status === "paused" ? (
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-400">
-                          <PauseCircle className="size-3" />
-                          <span>En pause</span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-zinc-400">
-                          <Clock className="size-3" />
-                          <span>Brouillon</span>
-                        </span>
-                      )}
-                    </div>
                   </div>
 
                   {/* Project Name & Tagline */}

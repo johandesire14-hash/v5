@@ -157,116 +157,6 @@ const getCountryFlagFromLocation = (location: string): string => {
   return "🌍";
 };
 
-const renderIncludedAppBadges = (apps?: string[]) => {
-  if (!apps || apps.length === 0) {
-    return (
-      <span className="text-[11px] text-zinc-500 italic">Accès direct</span>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex -space-x-1.5 overflow-hidden items-center">
-        {apps.slice(0, 4).map((app, idx) => {
-          const appLower = app.toLowerCase();
-          if (appLower.includes("telegram")) {
-            return (
-              <div
-                key={idx}
-                className="flex size-6 items-center justify-center rounded-lg bg-[#229ED9]/20 text-[#229ED9] ring-2 ring-[#0c0d0e] shadow-sm"
-                title={app}
-              >
-                <TelegramIcon className="size-3.5" />
-              </div>
-            );
-          }
-          if (appLower.includes("discord")) {
-            return (
-              <div
-                key={idx}
-                className="flex size-6 items-center justify-center rounded-lg bg-[#5865F2]/20 text-[#5865F2] ring-2 ring-[#0c0d0e] shadow-sm"
-                title={app}
-              >
-                <DiscordIcon className="size-3.5" />
-              </div>
-            );
-          }
-          if (
-            appLower.includes("fichier") ||
-            appLower.includes("document") ||
-            appLower.includes("téléchargement") ||
-            appLower.includes("digital") ||
-            appLower.includes("ressource")
-          ) {
-            return (
-              <div
-                key={idx}
-                className="flex size-6 items-center justify-center rounded-lg bg-emerald-500 text-white ring-2 ring-[#0c0d0e] shadow-sm"
-                title={app}
-              >
-                <FileText className="size-3" />
-              </div>
-            );
-          }
-          if (appLower.includes("ebook") || appLower.includes("e-book") || appLower.includes("livre")) {
-            return (
-              <div
-                key={idx}
-                className="flex size-6 items-center justify-center rounded-lg bg-cyan-500 text-white ring-2 ring-[#0c0d0e] shadow-sm"
-                title={app}
-              >
-                <BookOpen className="size-3" />
-              </div>
-            );
-          }
-          if (
-            appLower.includes("formation") ||
-            appLower.includes("cours") ||
-            appLower.includes("course") ||
-            appLower.includes("espace membre") ||
-            appLower.includes("vip")
-          ) {
-            return (
-              <div
-                key={idx}
-                className="flex size-6 items-center justify-center rounded-lg bg-purple-600 text-white ring-2 ring-[#0c0d0e] shadow-sm"
-                title={app}
-              >
-                <GraduationCap className="size-3" />
-              </div>
-            );
-          }
-          if (appLower.includes("chat") || appLower.includes("messagerie")) {
-            return (
-              <div
-                key={idx}
-                className="flex size-6 items-center justify-center rounded-lg bg-orange-500 text-white ring-2 ring-[#0c0d0e] shadow-sm"
-                title={app}
-              >
-                <MessageSquare className="size-3" />
-              </div>
-            );
-          }
-          return (
-            <div
-              key={idx}
-              className="flex size-6 items-center justify-center rounded-lg bg-emerald-600 text-white ring-2 ring-[#0c0d0e] shadow-sm"
-              title={app}
-            >
-              <Layers className="size-3" />
-            </div>
-          );
-        })}
-      </div>
-      {apps.length > 4 && (
-        <span className="text-[10px] font-mono text-zinc-400 ml-1 px-1.5 py-0.5 rounded bg-white/5 border border-white/5">
-          +{apps.length - 4}
-        </span>
-      )}
-    </div>
-  );
-};
-
 export const UserDashboard: React.FC<UserDashboardProps> = ({
   user,
   onLogout,
@@ -1630,17 +1520,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                         {activeSubscription ? `Membre : ${activeSubscription.companyName}` : activeCompany ? activeCompany.name : (lang === "fr" ? "Espace Personnel" : "Personal")}
                       </span>
                     </div>
-                    {activeSubscription && (
-                      <button
-                        onClick={() => {
-                          setActiveWorkspaceId("personnel");
-                          setIsMobileSidebarOpen(false);
-                        }}
-                        className="text-[10px] text-zinc-500 hover:text-white"
-                      >
-                        Quitter
-                      </button>
-                    )}
                   </div>
 
                   {activeWorkspaceId === "personnel" ? (
@@ -2151,7 +2030,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                         </h3>
                         <span className="size-2 rounded-full bg-[#00D26A] animate-pulse" />
                       </div>
-                      <span className="text-[10px] font-mono text-zinc-500">Live Network</span>
+                      <span className="text-[10px] font-mono text-zinc-500">Réseau en direct</span>
                     </div>
 
                     {/* Live feed list with African Country Flags */}
@@ -2176,10 +2055,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                             key={evt.id}
                             className="flex items-start gap-3 text-xs text-zinc-300 leading-snug p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:border-white/[0.08] transition-all"
                           >
-                            {/* African Country Flag Badge directly replacing icon */}
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#1c1e24] border border-white/10 text-lg leading-none shadow-sm select-none">
-                              <span>{evt.countryFlag || getCountryFlagFromLocation(evt.location)}</span>
-                            </div>
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-1">
@@ -2502,7 +2377,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
                           {/* Applications incluses (Dynamic icons matching exact selected apps) */}
                           <td className="py-4 px-4 whitespace-nowrap">
-                            {renderIncludedAppBadges(product.includedApps)}
+                            <span className="text-zinc-500">—</span>
                           </td>
 
                           {/* Conversion de paiement */}
