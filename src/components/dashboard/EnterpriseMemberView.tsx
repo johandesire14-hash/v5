@@ -58,6 +58,7 @@ import {
   BarChart3,
   DollarSign,
   Video,
+  LayoutDashboard,
 } from "lucide-react";
 import { EnterpriseSubscription, TelegramChannelItem, DiscordChannelItem } from "../../types";
 import { TelegramIcon, DiscordIcon } from "./ConnectedAppsView";
@@ -951,6 +952,21 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
         {/* Navigation Items (En haut) : Accueil, Assistance, etc. */}
         <nav className="space-y-1 text-xs font-medium">
+          {/* Tableau de bord : visible uniquement pour le créateur propriétaire */}
+          {isCompanyOwner && (
+            <button
+              onClick={() => {
+                setActiveTab("accueil");
+                setCompanyTab("accueil");
+                if (isMobile) setIsMobileSidebarOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer min-h-[44px] text-zinc-300 hover:bg-white/5 hover:text-white"
+            >
+              <LayoutDashboard className="size-4 text-blue-400" />
+              <span>Tableau de bord</span>
+            </button>
+          )}
+
           {/* Accueil */}
           <button
             onClick={() => {
