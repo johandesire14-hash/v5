@@ -52,6 +52,12 @@ import {
   GraduationCap,
   TrendingUp,
   Layers,
+  PenLine,
+  Image as ImageIcon,
+  Smile,
+  BarChart3,
+  DollarSign,
+  Video,
 } from "lucide-react";
 import { EnterpriseSubscription, TelegramChannelItem, DiscordChannelItem } from "../../types";
 import { TelegramIcon, DiscordIcon } from "./ConnectedAppsView";
@@ -141,6 +147,8 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   // Enterprise branding state (Banner & Profile Photo customization)
   const [currentSub, setCurrentSub] = useState<EnterpriseSubscription>(subscription);
   const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
+  const [isPostComposerOpen, setIsPostComposerOpen] = useState(false);
+  const [postText, setPostText] = useState("");
 
   React.useEffect(() => {
     setCurrentSub(subscription);
@@ -202,6 +210,12 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     }
     return false;
   }, [creatorCompanies, currentSub.companyId, currentSub.id, (currentSub as any).ownerId, (currentSub as any).creatorEmail, user]);
+
+  const handlePublishPost = () => {
+    if (!postText.trim()) return;
+    setPostText("");
+    setIsPostComposerOpen(false);
+  };
 
   // Listen to external branding updates
   React.useEffect(() => {
@@ -3397,6 +3411,99 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         )}
 
       </div>
+
+      {/* Creator-only publication composer */}
+      {isCompanyOwner && companyTab === "accueil" && (
+        <>
+          <button
+            type="button"
+            onClick={() => setIsPostComposerOpen(true)}
+            aria-label="Créer une publication"
+            title="Créer une publication"
+            className="absolute bottom-6 right-6 z-30 flex size-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl shadow-blue-950/50 transition-all hover:scale-105 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-[#08090b] cursor-pointer"
+          >
+            <PenLine className="size-6" />
+          </button>
+
+          {isPostComposerOpen && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="post-composer-title"
+                className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#111214] shadow-2xl"
+              >
+                <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-[#252830] text-xs font-bold text-white">
+                      {user.avatarInitials || currentSub.companyInitials || "JO"}
+                    </div>
+                    <div>
+                      <h2 id="post-composer-title" className="text-sm font-bold text-white">Créer une publication</h2>
+                      <p className="text-[11px] text-zinc-500">Publication officielle de {currentSub.companyName}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsPostComposerOpen(false)}
+                    aria-label="Fermer la fenêtre de publication"
+                    className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+
+                <div className="p-5">
+                  <textarea
+                    autoFocus
+                    value={postText}
+                    onChange={(event) => setPostText(event.target.value)}
+                    placeholder="À quoi pensez-vous ?"
+                    aria-label="Texte de la publication"
+                    className="min-h-[180px] w-full resize-none rounded-xl border border-white/10 bg-[#0b0c0e] p-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-blue-500/70"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 border-t border-white/10 px-5 py-4">
+                  <button type="button" title="Ajouter une image" aria-label="Ajouter une image" className="rounded-lg p-2 text-blue-400 transition-colors hover:bg-blue-400/10 cursor-pointer">
+                    <ImageIcon className="size-5" />
+                  </button>
+                  <button type="button" title="Ajouter un GIF" aria-label="Ajouter un GIF" className="rounded-lg p-2 text-blue-400 transition-colors hover:bg-blue-400/10 cursor-pointer">
+                    <span className="text-xs font-black">GIF</span>
+                  </button>
+                  <button type="button" title="Ajouter un emoji" aria-label="Ajouter un emoji" className="rounded-lg p-2 text-blue-400 transition-colors hover:bg-blue-400/10 cursor-pointer">
+                    <Smile className="size-5" />
+                  </button>
+                  <button type="button" title="Ajouter un sondage ou des statistiques" aria-label="Ajouter un sondage ou des statistiques" className="rounded-lg p-2 text-blue-400 transition-colors hover:bg-blue-400/10 cursor-pointer">
+                    <BarChart3 className="size-5" />
+                  </button>
+                  <button type="button" title="Ajouter une contribution payante" aria-label="Ajouter une contribution payante" className="rounded-lg p-2 text-blue-400 transition-colors hover:bg-blue-400/10 cursor-pointer">
+                    <DollarSign className="size-5" />
+                  </button>
+
+                  <div className="ml-auto flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsPostComposerOpen(false)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-red-600/90 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-red-500 cursor-pointer"
+                    >
+                      <Video className="size-4" />
+                      <span>Passer en direct</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePublishPost}
+                      className="rounded-full bg-blue-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-blue-500 cursor-pointer"
+                    >
+                      Publier
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Checkout Modal if user clicks on locked Telegram / Discord / Product offer */}
       {checkoutModalOffer && (
