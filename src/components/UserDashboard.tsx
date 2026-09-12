@@ -1332,9 +1332,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                         {lang === "fr" ? "Ajouter application" : "Add Application"}
                       </span>
                     </div>
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#0055ff] text-white">
-                      + Add
-                    </span>
                   </button>
 
                   {/* Telegram App */}
@@ -1691,9 +1688,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                             {lang === "fr" ? "Ajouter application" : "Add Application"}
                           </span>
                         </div>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#0055ff] text-white">
-                          + Add
-                        </span>
                       </button>
 
                       <button
@@ -2286,19 +2280,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                                   <span>{product.communityConfig.telegramChannelName}</span>
                                   <span className="text-[9px] text-zinc-400 group-hover/tg:text-white underline ml-0.5">Changer</span>
                                 </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setTelegramLinkModalProduct(product);
-                                    setIsTelegramLinkModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center gap-1 text-[10px] text-zinc-500 hover:text-[#229ED9] transition-colors w-fit cursor-pointer"
-                                >
-                                  <Plus className="size-2.5" />
-                                  <span>Lier un canal Telegram</span>
-                                </button>
-                              )}
+                              ) : null}
                             </div>
                           </td>
 
