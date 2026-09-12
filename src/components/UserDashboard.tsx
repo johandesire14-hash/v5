@@ -1063,6 +1063,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               setActiveWorkspaceId("personnel");
               setActiveNav("decouvrir");
             }}
+            onOpenCreatorDashboard={() => {
+              const creatorCompany = companies.find(
+                (company) => company.id === currentCommunitySub.companyId || company.id === currentCommunitySub.id
+              );
+              if (creatorCompany) {
+                setActiveWorkspaceId(creatorCompany.id);
+              }
+              setActiveNav("accueil");
+            }}
             onSeedSimulationData={handleSeedSimulationData}
           />
         </div>
@@ -1937,20 +1946,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                   </div>
                 </div>
 
-                {/* Actions under chart */}
-                {isCreatorCompanySelected && (
-                  <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-end gap-3 text-xs">
-                    <button
-                      onClick={() => {
-                        setEditingProduct(null);
-                        setIsProductStudioOpen(true);
-                      }}
-                      className="mansa-btn-green px-3.5 py-1.5 text-xs cursor-pointer font-bold"
-                    >
-                      <span>{lang === "fr" ? "Créer une offre" : "Create offer"}</span>
-                    </button>
-                  </div>
-                )}
               </div>
             {/* Right Column: Soldes & Pouls (lg:col-span-4, Matching Screenshot) */}
             <div className="lg:col-span-4 space-y-6">
