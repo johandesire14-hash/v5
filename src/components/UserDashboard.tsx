@@ -1994,7 +1994,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                     </div>
 
                     {/* Live feed list with African Country Flags */}
-                    <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+                    <div className="h-[460px] overflow-hidden pr-1">
                       {pulseEvents.length === 0 ? (
                         <div className="py-12 px-3 text-center space-y-2.5">
                           <div className="size-9 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center mx-auto text-zinc-500">
@@ -2010,9 +2010,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                           </p>
                         </div>
                       ) : (
-                        pulseEvents.map((evt) => (
+                        <div className="pulse-feed-track space-y-2.5">
+                          {[...pulseEvents, ...pulseEvents].map((evt, index) => (
                           <div
-                            key={evt.id}
+                            key={`${evt.id}-${index}`}
                             className="flex items-start gap-3 text-xs text-zinc-300 leading-snug p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:border-white/[0.08] transition-all"
                           >
 
@@ -2043,7 +2044,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                               </div>
                             </div>
                           </div>
-                        ))
+                          ))}
+                        </div>
                       )}
                     </div>
 

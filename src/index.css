@@ -30,6 +30,27 @@
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* The live Pulse feed advances automatically and is intentionally not manually scrollable. */
+.pulse-feed-track {
+  animation: mansa-pulse-feed-scroll 24s linear infinite;
+  will-change: transform;
+}
+
+@keyframes mansa-pulse-feed-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-feed-track {
+    animation: none;
+  }
+}
+
 /* Mansa Signature Green Button */
 .mansa-btn-green,
 .mansa-btn-orange,
