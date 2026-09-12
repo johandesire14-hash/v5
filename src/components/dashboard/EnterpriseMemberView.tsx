@@ -1124,7 +1124,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   }, [allSubscriptions, defaultRailCompanies]);
 
   return (
-    <div id="tour-community-page" className="flex h-full w-full flex-1 overflow-hidden relative select-none bg-[#08090b] text-[#eeeeee] font-sans antialiased">
+    <div className="flex h-full w-full flex-1 overflow-hidden relative select-none bg-[#08090b] text-[#eeeeee] font-sans antialiased">
       {/* 1. LEFTMOST RAIL: Enterprise Squares ("les cases entreprise sur le cote comme sur l'image") */}
       <div className="w-[72px] shrink-0 bg-[#08090a] border-r border-white/5 flex flex-col items-center py-3 gap-2 overflow-y-auto no-scrollbar select-none z-10">
           
@@ -2170,7 +2170,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
               {/* VUE CONTENU : ONGLET PRODUITS */}
               {companyTab === "produits" && (
-                <div id="tour-community-products" className="space-y-6 animate-in fade-in duration-150 max-w-5xl">
+                <div className="space-y-6 animate-in fade-in duration-150 max-w-5xl">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {enterpriseOffers.length === 0 ? (
                       <div className="col-span-1 md:col-span-2 py-12 px-6 rounded-2xl border border-white/10 bg-[#111318] text-center space-y-3">
