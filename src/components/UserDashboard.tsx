@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Search,
   Compass,
@@ -198,6 +198,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const [realTransactions, setRealTransactions] = useState<FirestoreTransaction[]>([]);
   const [balance, setBalance] = useState<number>(0.0);
   const [pulseEvents, setPulseEvents] = useState<PulseEvent[]>([]);
+  const [pulseFeedOffset, setPulseFeedOffset] = useState(0);
+  const previousPulseIdsRef = useRef<string[]>([]);
   const [isLoadingFirestore, setIsLoadingFirestore] = useState<boolean>(true);
   const [currency, setCurrency] = useState<CurrencyCode>(getStoredCurrency());
 
@@ -661,6 +663,21 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   };
 
   // Sync real-time African pulse feed strictly from real Firestore transactions
+  useEffect(() => {
+    const previousIds = previousPulseIdsRef.current;
+    const currentIds = realTransactions.map((tx) => tx.id);
+    const hasNewTransaction = previousIds.length > 0 && currentIds.some((id) => !previousIds.includes(id));
+
+    if (hasNewTransaction) {
+      setPulseFeedOffset(-76);
+      const frame = window.requestAnimationFrame(() => setPulseFeedOffset(0));
+      previousPulseIdsRef.current = currentIds;
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    previousPulseIdsRef.current = currentIds;
+  }, [realTransactions]);
+
   useEffect(() => {
     if (realTransactions && realTransactions.length > 0) {
       const mappedPulse: PulseEvent[] = realTransactions.slice(0, 8).map((tx) => ({
@@ -2010,10 +2027,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                           </p>
                         </div>
                       ) : (
-                        <div className="pulse-feed-track space-y-2.5">
-                          {[...pulseEvents, ...pulseEvents].map((evt, index) => (
+                        <div
+                          className="pulse-feed-track space-y-2.5"
+                          style={{ transform: `translateY(${pulseFeedOffset}px)` }}
+                        >
+                          {pulseEvents.map((evt) => (
                           <div
-                            key={`${evt.id}-${index}`}
+                            key={evt.id}
                             className="flex items-start gap-3 text-xs text-zinc-300 leading-snug p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:border-white/[0.08] transition-all"
                           >
 
