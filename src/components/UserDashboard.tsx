@@ -92,7 +92,14 @@ import {
   setStoredCurrency,
 } from "../utils/currency";
 import { CurrencySelector } from "./dashboard/CurrencySelector";
-import { GuidedTour, OnboardingData } from "./dashboard/GuidedTour";
+import {
+  GuidedTour,
+  OnboardingData,
+  TourContext,
+  getTourCompletedStorageKey,
+  TOUR_COMPLETED_STORAGE_KEY,
+  LEGACY_TOUR_COMPLETED_STORAGE_KEY,
+} from "./dashboard/GuidedTour";
 import { BusinessProject, Company, EnterpriseSubscription } from "../types";
 import { CompanyOnboardingModal } from "./CompanyOnboardingModal";
 import { getSavedCompanies, saveCompany, seedUserCompanies } from "../utils/companyStorage";
@@ -564,6 +571,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const [newChatInput, setNewChatInput] = useState("");
   const [isTabLoading, setIsTabLoading] = useState(false);
   const [isGuidedTourOpen, setIsGuidedTourOpen] = useState(false);
+  const [guidedTourContext, setGuidedTourContext] = useState<TourContext>("accueil");
   const [isSeedingData, setIsSeedingData] = useState(false);
   const [seedToastMessage, setSeedToastMessage] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -616,17 +624,37 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     }
   };
 
-  // Auto-trigger guided tour for new creators on first connection
+  // Auto-trigger the relevant contextual tour once per page.
   useEffect(() => {
-    const tourKey = `mansa_tour_completed_${user.uid || "guest"}`;
-    const isCompleted = localStorage.getItem(tourKey);
+    const supportedContexts: TourContext[] = [
+      "accueil",
+      "produits",
+      "paiements",
+      "clients",
+      "communaute",
+      "decouvrir",
+      "applications",
+      "telegram_app",
+      "discord_app",
+      "parametres_entreprise",
+      "affilies",
+      "assistance",
+      "projets",
+    ];
+    if (!supportedContexts.includes(activeNav as TourContext) || isGuidedTourOpen) return;
+    const context = activeNav as TourContext;
+    const isCompleted =
+      localStorage.getItem(getTourCompletedStorageKey(context)) ||
+      (context === "accueil" &&
+        (localStorage.getItem(TOUR_COMPLETED_STORAGE_KEY) || localStorage.getItem(LEGACY_TOUR_COMPLETED_STORAGE_KEY)));
     if (!isCompleted) {
       const timer = setTimeout(() => {
+        setGuidedTourContext(context);
         setIsGuidedTourOpen(true);
       }, 600);
       return () => clearTimeout(timer);
     }
-  }, [user.uid]);
+  }, [activeNav, user.uid, isGuidedTourOpen]);
 
   // Tab change with skeleton loading transition
   const switchTab = (tab: typeof activeNav) => {
@@ -992,6 +1020,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                   onClick={() => {
                     setIsProfileMenuOpen(false);
                     setActiveNav("accueil");
+                    setGuidedTourContext("accueil");
                     setIsGuidedTourOpen(true);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#00D26A] hover:bg-[#00D26A]/10 rounded-lg transition-colors cursor-pointer font-medium"
@@ -1074,7 +1103,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           
           <div className="space-y-4">
             {/* Top Workspace Icons Switcher: Bonhomme Gris (Personnel) + Entreprises du créateur UNIQUEMENT */}
-            <div className="flex items-center gap-1.5 pb-2 overflow-x-auto no-scrollbar">
+            <div id="tour-workspace-switcher" className="flex items-center gap-1.5 pb-2 overflow-x-auto no-scrollbar">
               {/* Personal Workspace button */}
               <button
                 onClick={() => {
@@ -1747,6 +1776,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                   onClick={() => {
                     setIsMobileSidebarOpen(false);
                     setActiveNav("accueil");
+                    setGuidedTourContext("accueil");
                     setIsGuidedTourOpen(true);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:text-white rounded-lg hover:bg-white/5 transition-colors cursor-pointer min-h-[40px]"
@@ -2077,7 +2107,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <div className="max-w-7xl mx-auto space-y-5">
               
               {/* Header: Title, Visibility Filter Pill, and Action Buttons */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div id="tour-products-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 
                 <div className="space-y-3">
                   <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
@@ -2100,7 +2130,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 </div>
 
                 {/* Top Right Action Buttons: + Créer un produit, Exporter, Settings */}
-                <div className="flex items-center gap-2.5">
+                <div id="tour-products-create" className="flex items-center gap-2.5">
                   {isCreatorCompanySelected && (
                     <button
                       onClick={() => {
@@ -2168,7 +2198,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               )}
 
               {/* Products Table matching screenshot */}
-              <div className="w-full rounded-2xl border border-white/[0.08] bg-[#0c0d0e] overflow-hidden shadow-sm">
+              <div id="tour-products-table" className="w-full rounded-2xl border border-white/[0.08] bg-[#0c0d0e] overflow-hidden shadow-sm">
                 <div className="overflow-x-auto w-full">
                   <table className="w-full text-left text-xs border-collapse">
                     
@@ -2546,12 +2576,14 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <PaymentsView
-                lang={lang}
-                currency={currency}
-                activeWorkspaceId={activeWorkspaceId}
-                activeCompanyName={activeCompany?.name}
-              />
+              <div id="tour-payments-page">
+                <PaymentsView
+                  lang={lang}
+                  currency={currency}
+                  activeWorkspaceId={activeWorkspaceId}
+                  activeCompanyName={activeCompany?.name}
+                />
+              </div>
             )
           )}
 
@@ -2562,7 +2594,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <CustomersView lang={lang} />
+              <div id="tour-clients-page"><CustomersView lang={lang} /></div>
             )
           )}
 
@@ -2573,12 +2605,14 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <AssistanceView
-                lang={lang}
-                activeCompany={activeCompany}
-                companies={companies}
-                onNavigateToClients={() => switchTab("clients")}
-              />
+              <div id="tour-support-page">
+                <AssistanceView
+                  lang={lang}
+                  activeCompany={activeCompany}
+                  companies={companies}
+                  onNavigateToClients={() => switchTab("clients")}
+                />
+              </div>
             )
           )}
 
@@ -2589,12 +2623,14 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <AffiliatesView
-                lang={lang}
-                userRefName={user.name || "johan"}
-                isPersonalWorkspace={activeWorkspaceId === "personnel"}
-                currency={currency}
-              />
+              <div id="tour-affiliates-page">
+                <AffiliatesView
+                  lang={lang}
+                  userRefName={user.name || "johan"}
+                  isPersonalWorkspace={activeWorkspaceId === "personnel"}
+                  currency={currency}
+                />
+              </div>
             )
           )}
 
@@ -2605,7 +2641,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <ConnectedAppsView lang={lang} initialSubView="catalog" />
+              <div id="tour-applications-page"><ConnectedAppsView lang={lang} initialSubView="catalog" /></div>
             )
           )}
 
@@ -2616,7 +2652,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <ConnectedAppsView lang={lang} initialSubView="telegram" />
+              <div id="tour-telegram-page"><ConnectedAppsView lang={lang} initialSubView="telegram" /></div>
             )
           )}
 
@@ -2627,7 +2663,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <ConnectedAppsView lang={lang} initialSubView="discord" />
+              <div id="tour-discord-page"><ConnectedAppsView lang={lang} initialSubView="discord" /></div>
             )
           )}
 
@@ -2638,11 +2674,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <DiscoverCreatorsView
-                lang={lang}
-                user={user}
-                onNavigateToEnterprise={handleVisitEnterpriseFromDiscover}
-              />
+              <div id="tour-discover-page">
+                <DiscoverCreatorsView
+                  lang={lang}
+                  user={user}
+                  onNavigateToEnterprise={handleVisitEnterpriseFromDiscover}
+                />
+              </div>
             )
           )}
 
@@ -2671,14 +2709,16 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <DashboardProductsSkeleton />
               </div>
             ) : (
-              <SettingsView
-                lang={lang}
-                user={user}
-                onLogout={onLogout}
-                initialTab="store"
-                activeCompanyId={activeCompany?.id}
-                activeCompanyName={activeCompany?.name}
-              />
+              <div id="tour-company-settings-page">
+                <SettingsView
+                  lang={lang}
+                  user={user}
+                  onLogout={onLogout}
+                  initialTab="store"
+                  activeCompanyId={activeCompany?.id}
+                  activeCompanyName={activeCompany?.name}
+                />
+              </div>
             )
           )}
 
@@ -2945,11 +2985,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         onClose={() => setIsGuidedTourOpen(false)}
         onSelectTab={(tab) => switchTab(tab as typeof activeNav)}
         lang={lang}
+        tourId={guidedTourContext}
         onCompleteTour={() => {
-          localStorage.setItem("mansa_creator_tour_completed", "true");
+          localStorage.setItem(getTourCompletedStorageKey(guidedTourContext), "true");
         }}
         onOnboardingComplete={(data: OnboardingData) => {
           setCurrency(data.currency);
+          setStoredCurrency(data.currency);
         }}
       />
 

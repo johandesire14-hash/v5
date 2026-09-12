@@ -29,6 +29,25 @@ const ONBOARDING_STORAGE_KEY = "mansa-onboarding-profile";
 export const TOUR_COMPLETED_STORAGE_KEY = "mansa_creator_tour_completed";
 export const LEGACY_TOUR_COMPLETED_STORAGE_KEY = "whop_creator_tour_completed";
 
+export type TourContext =
+  | "accueil"
+  | "produits"
+  | "paiements"
+  | "clients"
+  | "communaute"
+  | "decouvrir"
+  | "applications"
+  | "telegram_app"
+  | "discord_app"
+  | "parametres_entreprise"
+  | "affilies"
+  | "assistance"
+  | "projets";
+
+export function getTourCompletedStorageKey(context: string): string {
+  return `mansa_tour_completed_${context}`;
+}
+
 export function isCreatorTourCompleted(): boolean {
   if (typeof window === "undefined") return false;
   let val = localStorage.getItem(TOUR_COMPLETED_STORAGE_KEY);
@@ -56,6 +75,18 @@ export interface TourStep {
 }
 
 const TOUR_STEPS: TourStep[] = [
+  {
+    id: "step-workspaces",
+    targetSelector: "#tour-workspace-switcher",
+    titleFr: "Vos espaces de travail",
+    titleEn: "Your workspaces",
+    descriptionFr: "Passez de votre espace personnel à l'une de vos entreprises. Le bouton + permet de créer une nouvelle entreprise.",
+    descriptionEn: "Switch between your personal space and your companies. The + button creates a new company.",
+    icon: <Layers className="size-5 text-cyan-400" />,
+    position: "bottom",
+    targetTab: "accueil",
+    highlightPadding: 8,
+  },
   {
     id: "step-balance",
     targetSelector: "#tour-balance-chart",
@@ -142,6 +173,52 @@ const TOUR_STEPS: TourStep[] = [
   },
 ];
 
+const PAGE_TOUR_STEPS: Record<Exclude<TourContext, "accueil">, TourStep[]> = {
+  produits: [
+    { id: "products-header", targetSelector: "#tour-products-header", titleFr: "Votre catalogue de produits", titleEn: "Your product catalog", descriptionFr: "Créez, publiez et gérez vos offres numériques depuis cet espace.", descriptionEn: "Create, publish, and manage your digital offers here.", icon: <Layers className="size-5 text-[#00D26A]" />, position: "bottom", targetTab: "produits" },
+    { id: "products-create", targetSelector: "#tour-products-create", titleFr: "Créer une offre", titleEn: "Create an offer", descriptionFr: "Ouvrez le Studio Produit pour définir le prix, la facturation et les fonctionnalités Telegram ou Discord.", descriptionEn: "Open Product Studio to define pricing, billing, and Telegram or Discord features.", icon: <Sparkles className="size-5 text-[#00D26A]" />, position: "bottom", targetTab: "produits" },
+    { id: "products-table", targetSelector: "#tour-products-table", titleFr: "Suivre vos produits", titleEn: "Manage your products", descriptionFr: "Consultez la visibilité, copiez le lien public et modifiez vos offres depuis le tableau.", descriptionEn: "Review visibility, copy public links, and edit offers from the table.", icon: <TrendingUp className="size-5 text-emerald-400" />, position: "top", targetTab: "produits" },
+  ],
+  paiements: [
+    { id: "payments-page", targetSelector: "#tour-payments-page", titleFr: "Paiements et trésorerie", titleEn: "Payments and treasury", descriptionFr: "Retrouvez vos encaissements, transactions et indicateurs de trésorerie au même endroit.", descriptionEn: "Review collections, transactions, and treasury indicators in one place.", icon: <Coins className="size-5 text-[#00D26A]" />, position: "bottom", targetTab: "paiements" },
+  ],
+  clients: [
+    { id: "clients-page", targetSelector: "#tour-clients-page", titleFr: "Clients et membres", titleEn: "Customers and members", descriptionFr: "Recherchez vos clients, consultez leurs achats et suivez leurs abonnements.", descriptionEn: "Search customers, review purchases, and track subscriptions.", icon: <Layers className="size-5 text-blue-400" />, position: "bottom", targetTab: "clients" },
+  ],
+  communaute: [
+    { id: "community-header", targetSelector: "#tour-community-page", titleFr: "Votre espace communauté", titleEn: "Your community space", descriptionFr: "Retrouvez l'identité de l'entreprise, ses accès et les fonctionnalités disponibles pour votre abonnement.", descriptionEn: "Review the company identity, access, and features included in your membership.", icon: <Globe className="size-5 text-[#00D26A]" />, position: "bottom", targetTab: "communaute" },
+    { id: "community-products", targetSelector: "#tour-community-products", titleFr: "Produits et fonctionnalités", titleEn: "Products and features", descriptionFr: "Les éléments verrouillés peuvent être sélectionnés pour ouvrir directement la page de l'offre correspondante.", descriptionEn: "Locked items can be selected to open the corresponding offer page.", icon: <Layers className="size-5 text-amber-400" />, position: "right", targetTab: "communaute" },
+  ],
+  decouvrir: [
+    { id: "discover-page", targetSelector: "#tour-discover-page", titleFr: "Découvrir les entreprises", titleEn: "Discover companies", descriptionFr: "Explorez les entreprises, comparez leurs offres et visitez une communauté avant de la rejoindre.", descriptionEn: "Explore companies, compare offers, and visit a community before joining.", icon: <Globe className="size-5 text-cyan-400" />, position: "bottom", targetTab: "decouvrir" },
+  ],
+  applications: [
+    { id: "apps-page", targetSelector: "#tour-applications-page", titleFr: "Applications connectées", titleEn: "Connected applications", descriptionFr: "Gérez les applications utilisées par votre espace et ajoutez de nouvelles intégrations.", descriptionEn: "Manage apps used by your workspace and add new integrations.", icon: <Bot className="size-5 text-[#00D26A]" />, position: "bottom", targetTab: "applications" },
+  ],
+  telegram_app: [
+    { id: "telegram-page", targetSelector: "#tour-telegram-page", titleFr: "Automatisation Telegram", titleEn: "Telegram automation", descriptionFr: "Configurez le bot, les canaux et les accès automatiques associés à vos produits.", descriptionEn: "Configure the bot, channels, and automatic access linked to your products.", icon: <Zap className="size-5 text-sky-400" />, position: "bottom", targetTab: "telegram_app" },
+  ],
+  discord_app: [
+    { id: "discord-page", targetSelector: "#tour-discord-page", titleFr: "Automatisation Discord", titleEn: "Discord automation", descriptionFr: "Connectez votre serveur et automatisez les rôles et invitations des membres.", descriptionEn: "Connect your server and automate member roles and invitations.", icon: <Bot className="size-5 text-indigo-400" />, position: "bottom", targetTab: "discord_app" },
+  ],
+  parametres_entreprise: [
+    { id: "company-settings-page", targetSelector: "#tour-company-settings-page", titleFr: "Paramètres de l'entreprise", titleEn: "Company settings", descriptionFr: "Définissez le nom, l'identité visuelle, la description et les informations visibles par vos membres.", descriptionEn: "Set the name, visual identity, description, and information visible to members.", icon: <Layers className="size-5 text-emerald-400" />, position: "bottom", targetTab: "parametres_entreprise" },
+  ],
+  affilies: [
+    { id: "affiliates-page", targetSelector: "#tour-affiliates-page", titleFr: "Programme d'affiliation", titleEn: "Affiliate program", descriptionFr: "Activez vos commissions et suivez les ventes générées par vos partenaires.", descriptionEn: "Set commissions and track sales generated by partners.", icon: <TrendingUp className="size-5 text-amber-400" />, position: "bottom", targetTab: "affilies" },
+  ],
+  assistance: [
+    { id: "support-page", targetSelector: "#tour-support-page", titleFr: "Assistance", titleEn: "Support", descriptionFr: "Centralisez les demandes de vos clients et répondez depuis un espace unique.", descriptionEn: "Centralize customer requests and respond from one workspace.", icon: <HelpCircle className="size-5 text-blue-400" />, position: "bottom", targetTab: "assistance" },
+  ],
+  projets: [
+    { id: "projects-page", targetSelector: "#tour-projects-page", titleFr: "Projets et communautés", titleEn: "Projects and communities", descriptionFr: "Organisez vos projets, communautés et offres numériques depuis cet espace.", descriptionEn: "Organize your projects, communities, and digital offers here.", icon: <Sparkles className="size-5 text-[#00D26A]" />, position: "bottom", targetTab: "projets" },
+  ],
+};
+
+export function getTourSteps(context: TourContext): TourStep[] {
+  return context === "accueil" ? TOUR_STEPS : PAGE_TOUR_STEPS[context];
+}
+
 interface GuidedTourProps {
   isOpen: boolean;
   onClose: () => void;
@@ -149,6 +226,7 @@ interface GuidedTourProps {
   lang?: "fr" | "en";
   onCompleteTour?: () => void;
   onOnboardingComplete?: (data: OnboardingData) => void;
+  tourId?: TourContext;
 }
 
 interface HighlightRect {
@@ -166,6 +244,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
   lang = "fr",
   onCompleteTour,
   onOnboardingComplete,
+  tourId = "accueil" as TourContext,
 }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [highlightRect, setHighlightRect] = useState<HighlightRect | null>(null);
@@ -201,9 +280,18 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
   const highlightRequestRef = useRef(0);
   const highlightFrameRef = useRef<number | null>(null);
 
-  const step = TOUR_STEPS[currentStepIndex];
+  const steps = getTourSteps(tourId);
+  const step = steps[currentStepIndex];
   const isFirstStep = currentStepIndex === 0;
-  const isLastStep = currentStepIndex === TOUR_STEPS.length - 1;
+  const isLastStep = currentStepIndex === steps.length - 1;
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStepIndex(0);
+      setIsCompletedModalOpen(false);
+      setOnboardingError(null);
+    }
+  }, [isOpen, tourId]);
 
   // Switch tab if target step requires a specific tab
   useEffect(() => {
@@ -310,6 +398,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
   const handleNext = () => {
     if (isLastStep) {
       setIsCompletedModalOpen(true);
+      localStorage.setItem(getTourCompletedStorageKey(tourId), "true");
       if (onCompleteTour) onCompleteTour();
     } else {
       setCurrentStepIndex((prev) => prev + 1);
@@ -323,7 +412,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
   };
 
   const handleSkip = () => {
-    localStorage.setItem(TOUR_COMPLETED_STORAGE_KEY, "true");
+    localStorage.setItem(getTourCompletedStorageKey(tourId), "true");
     onClose();
   };
 
@@ -618,6 +707,10 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
         <div
           ref={tooltipRef}
           style={getTooltipStyle()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="guided-tour-title"
+          aria-describedby="guided-tour-description"
           className="rounded-2xl border border-[#00D26A]/40 bg-[#14161c]/98 backdrop-blur-xl p-5 shadow-2xl text-white space-y-4 animate-in fade-in zoom-in-95 duration-200"
         >
           {/* Header with Step Counter & Close */}
@@ -628,7 +721,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] font-mono font-bold text-[#00D26A]">
-                  Étape {currentStepIndex + 1} sur {TOUR_STEPS.length}
+                  Étape {currentStepIndex + 1} sur {steps.length}
                 </span>
               </div>
             </div>
@@ -645,10 +738,10 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
 
           {/* Body Content */}
           <div className="space-y-1.5">
-            <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
+            <h4 id="guided-tour-title" className="text-sm sm:text-base font-bold text-white tracking-tight">
               {step.titleFr}
             </h4>
-            <p className="text-xs text-zinc-300 leading-relaxed">
+            <p id="guided-tour-description" className="text-xs text-zinc-300 leading-relaxed">
               {step.descriptionFr}
             </p>
           </div>
@@ -656,10 +749,11 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
           {/* Step Progress Dots */}
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-1.5">
-              {TOUR_STEPS.map((_, idx) => (
+              {steps.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentStepIndex(idx)}
+                  aria-label={`Aller à l'étape ${idx + 1}`}
                   className={`h-1.5 rounded-full transition-all cursor-pointer ${
                     idx === currentStepIndex
                       ? "w-6 bg-[#00D26A]"
