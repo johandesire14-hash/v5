@@ -95,7 +95,7 @@ interface EnterpriseMemberViewProps {
   onSelectSubscription?: (subId: string) => void;
   creatorCompanies?: any[];
   onSelectCreatorCompany?: (comp: any) => void;
-  user?: { name: string; email: string; avatarInitials?: string };
+  user?: { uid?: string; name: string; email: string; avatarInitials?: string };
   onOpenMarketplace?: () => void;
   onSeedSimulationData?: () => void;
   onOpenCreatorDashboard?: () => void;

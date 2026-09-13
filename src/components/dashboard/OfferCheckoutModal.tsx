@@ -115,45 +115,63 @@ export const OfferCheckoutModal: React.FC<OfferCheckoutModalProps> = ({
     setPaymentError(null);
     setIsProcessing(true);
 
-    if (offer.pricingType === "paid" && paymentMethod === "mobile_money") {
-      if (!mobileMoneyValidation?.isValid) {
+    if (offer.pricingType === "paid") {
+      if (paymentMethod === "mobile_money" && !mobileMoneyValidation?.isValid) {
         setIsProcessing(false);
         setPaymentError("Veuillez renseigner un numéro Mobile Money valide avant de continuer.");
         return;
       }
 
-      // Re-vérification stricte côté backend avant d'envoyer la transaction (Section 10)
+      if (!user?.uid) {
+        setIsProcessing(false);
+        setPaymentError("Connectez-vous à votre compte Mansa avant de payer.");
+        return;
+      }
+
       try {
-        const res = await fetch("/api/payment/process-mobile-money", {
+        const paymentProvider = paymentMethod === "mobile_money" && mobileMoneyValidation?.operatorId.toLowerCase().includes("wave") ? "wave" : "kpay";
+        const invoiceResponse = await fetch("/api/payment/invoices", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            dialCode: mobileMoneyValidation.dialCode,
-            operatorId: mobileMoneyValidation.operatorId,
-            phoneNumber: mobileMoneyValidation.normalizedNumber,
-            currency: offer.currency || "XAF",
-            amount: currentPlan.price,
-            offerId: offer.id,
-            offerTitle: offer.title,
-            companyId: offer.companyId,
-            companyName: offer.companyName,
-            customerName,
+            customerUid: user.uid,
             customerEmail,
+            offerId: offer.id,
+            offerName: offer.title,
+            offerType: offer.type || "membership",
+            companyId: offer.companyId,
+            creatorId: offer.creatorId || offer.companyId,
+            grossAmount: currentPlan.price,
+            currency: offer.currency || "XAF",
+            paymentProvider,
+            phoneNumber: mobileMoneyValidation?.normalizedNumber,
+            expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
           }),
         });
-
-        const data = await res.json();
-        if (!res.ok || !data.success) {
+        const invoiceData = await invoiceResponse.json();
+        if (!invoiceResponse.ok || !invoiceData.success) {
           setIsProcessing(false);
-          setPaymentError(
-            data.reason ||
-              data.error ||
-              "Transaction refusée par le serveur. Les données de paiement ne correspondent pas aux règles autorisées."
-          );
+          setPaymentError(invoiceData.error || "Impossible de créer la facture.");
+          return;
+        }
+
+        // Mode test : simule uniquement la confirmation du prestataire.
+        // En production, cette étape sera remplacée par le webhook Wave/KPay.
+        const confirmationResponse = await fetch(`/api/payment/invoices/${invoiceData.invoice.paymentId}/test-confirm`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: currentPlan.price, providerFee: 0 }),
+        });
+        const confirmationData = await confirmationResponse.json();
+        if (!confirmationResponse.ok || !confirmationData.success) {
+          setIsProcessing(false);
+          setPaymentError(confirmationData.error || "Le paiement est en attente de confirmation.");
           return;
         }
       } catch (err: any) {
-        console.warn("Backend payment check:", err);
+        setIsProcessing(false);
+        setPaymentError("Impossible de créer ou confirmer la facture. Réessayez.");
+        return;
       }
     }
 

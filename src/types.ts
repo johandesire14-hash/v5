@@ -205,6 +205,7 @@ export interface CreatorPlatformOffer {
   id: string;
   title: string;
   companyId: string;
+  creatorId?: string;
   companyName: string;
   companyInitials?: string;
   companyLogo?: string;

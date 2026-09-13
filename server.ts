@@ -25,6 +25,15 @@ import {
   AVAILABLE_DIAL_CODES,
 } from "./src/utils/phoneValidationRules";
 import {
+  createInvoice,
+  getInvoice,
+  listInvoices,
+  confirmInvoice,
+  createRefund,
+  reconcilePendingInvoices,
+  verifyProviderSignature,
+} from "./server/paymentSystem";
+import {
   verifyMemberResourceAccess,
   getOffersForCompany,
   getMemberAuthorizedOffers,
@@ -36,7 +45,7 @@ if (!process.env.MANSA_API_KEY) {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 // Body parser avec conservation du rawBody pour la validation cryptographique HMAC
 app.use(
@@ -49,6 +58,7 @@ app.use(
 
 // Démarrer le cron job de vérification quotidienne
 initMansaCron();
+setInterval(() => reconcilePendingInvoices(24 * 60), 15 * 60 * 1000);
 
 // Démarrage du bot Telegram en mode Polling
 startTelegramBotPolling();
@@ -103,87 +113,59 @@ app.post("/api/payment/validate-phone", (req, res) => {
   return res.json(result);
 });
 
-// 3. Traitement sécurisé du paiement avec vérification stricte backend (Section 10)
-app.post("/api/payment/process-mobile-money", (req, res) => {
-  const {
-    dialCode,
-    operatorId,
-    phoneNumber,
-    currency = "XAF",
-    amount = 0,
-    offerId,
-    offerTitle = "Offre Entreprise",
-    companyId,
-    companyName = "Entreprise",
-    customerName = "Client",
-    customerEmail = "client@afhub.app",
-  } = req.body;
-
-  // Validation stricte côté backend avant envoi au prestataire
-  const validation = validatePhoneNumber(dialCode, operatorId, phoneNumber, currency);
-
-  if (!validation.isValid) {
-    // Rejet strict selon les directives Section 10
-    console.warn(`[Payment Rejected] Phone number validation failed on server for ${customerEmail}:`, {
-      dialCode,
-      operatorId,
-      phoneNumber,
-      currency,
-      status: validation.status,
-      errorMessage: validation.errorMessage,
-    });
-
-    return res.status(400).json({
-      success: false,
-      error: "Transaction refusée",
-      status: validation.status,
-      errorTitle: validation.errorTitle || "Validation échouée",
-      reason: validation.errorMessage || "Le numéro ou les paramètres de paiement ne respectent pas les règles.",
-      details: validation,
-    });
+// 3. Système de facturation sécurisé : les paiements réels restent en attente
+// d'une intégration Wave/KPay configurée. Aucun achat invité n'est accepté.
+app.post("/api/payment/invoices", (req, res) => {
+  try {
+    const { customerUid, customerEmail = "", offerId, offerName, offerType = "paid", companyId, creatorId, grossAmount, currency = "XOF", paymentProvider = "kpay", phoneNumber, expiresAt } = req.body;
+    const invoice = createInvoice({ customerUid, customerEmail, offerId, offerName, offerType, companyId, creatorId, grossAmount: Number(grossAmount), currency, paymentProvider, phoneNumber, expiresAt });
+    return res.status(201).json({ success: true, invoice, mode: "test" });
+  } catch (error: any) {
+    const status = error.message === "AUTHENTICATED_USER_REQUIRED" ? 401 : 400;
+    return res.status(status).json({ success: false, error: error.message || "INVOICE_CREATION_FAILED" });
   }
-
-  // Si valide : Génération de la transaction et validation
-  const transactionId = `tx_${operatorId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const timestamp = new Date().toISOString();
-
-  // Enregistrement dans les abonnements / logs
-  subscriptionsDb.unshift({
-    id: `sub_${transactionId}`,
-    customerName,
-    customerPhone: validation.fullInternationalNumber,
-    platform: "mobile_money",
-    customer_email: customerEmail,
-    customerEmail,
-    offer_id: offerId,
-    offerId,
-    platformUserId: customerEmail,
-    planName: offerTitle,
-    amountXOF: amount,
-    paymentMethod: `${validation.operatorName || operatorId.toUpperCase()} (${validation.flag} ${validation.dialCode})`,
-    status: "active",
-    createdAt: timestamp,
-    expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
-    roleGranted: offerTitle,
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: `Paiement ${validation.operatorName} validé avec succès.`,
-    transactionId,
-    timestamp,
-    amount,
-    currency,
-    operator: validation.operatorName,
-    dialCode: validation.dialCode,
-    country: validation.countryName,
-    formattedPhone: validation.formattedNumber,
-    fullInternationalNumber: validation.fullInternationalNumber,
-    companyName,
-    offerTitle,
-  });
 });
+app.get("/api/payment/invoices/:paymentId", (req, res) => {
+  const invoice = getInvoice(req.params.paymentId);
+  if (!invoice) return res.status(404).json({ success: false, error: "INVOICE_NOT_FOUND" });
+  return res.json({ success: true, invoice });
+});
+app.get("/api/payment/invoices", (_req, res) => res.json({ success: true, invoices: listInvoices() }));
+function confirmPaymentFromWebhook(req: any, res: any, provider: "wave" | "kpay") {
+  const signature = req.headers["x-payment-signature"] as string | undefined;
+  const secret = provider === "wave" ? process.env.WAVE_WEBHOOK_SECRET : process.env.KPAY_WEBHOOK_SECRET;
+  if (!verifyProviderSignature(req.rawBody?.toString("utf8") || JSON.stringify(req.body), signature, secret)) return res.status(401).json({ success: false, error: "INVALID_WEBHOOK_SIGNATURE" });
+  try {
+    const { paymentId, providerTransactionId, amount, providerFee = 0 } = req.body;
+    return res.json({ success: true, invoice: confirmInvoice(paymentId, providerTransactionId, Number(amount), Number(providerFee)) });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message || "PAYMENT_CONFIRMATION_FAILED" });
+  }
+}
+app.post("/api/payment/webhooks/wave", (req, res) => confirmPaymentFromWebhook(req, res, "wave"));
+app.post("/api/payment/webhooks/kpay", (req, res) => confirmPaymentFromWebhook(req, res, "kpay"));
+app.post("/api/payment/invoices/:paymentId/test-confirm", (req, res) => {
+  if (process.env.NODE_ENV === "production") return res.status(403).json({ success: false, error: "TEST_MODE_DISABLED" });
+  try {
+    return res.json({ success: true, invoice: confirmInvoice(req.params.paymentId, req.body.providerTransactionId || `test_tx_${Date.now()}`, Number(req.body.amount), Number(req.body.providerFee || 0)), mode: "test" });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message || "TEST_CONFIRMATION_FAILED" });
+  }
+});
+app.post("/api/payment/invoices/:paymentId/refunds", (req, res) => {
+  try {
+    return res.status(201).json({ success: true, refund: createRefund(req.params.paymentId, Number(req.body.amount), req.body.reason || "Remboursement approuvé", req.body.approvedBy || "system") });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message || "REFUND_FAILED" });
+  }
+});
+app.post("/api/payment/reconcile", (_req, res) => res.json({ success: true, result: reconcilePendingInvoices(24 * 60), mode: "test" }));
 
+// 3. Traitement sécurisé du paiement avec vérification stricte backend (Section 10)
+// Ancienne route désactivée : elle ne créait pas de facture et activait l'accès trop tôt.
+app.post("/api/payment/process-mobile-money", (_req, res) => {
+  return res.status(410).json({ success: false, error: "LEGACY_PAYMENT_DISABLED", message: "Utilisez /api/payment/invoices puis la confirmation par webhook." });
+});
 // ==========================================
 // 🚀 MANSA - ENDPOINTS WEBHOOK KPAY & BOTS
 // ==========================================
