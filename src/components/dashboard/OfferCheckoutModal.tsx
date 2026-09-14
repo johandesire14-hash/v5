@@ -29,6 +29,7 @@ import { MobileMoneyPaymentForm } from "../payment/MobileMoneyPaymentForm";
 import { PhoneValidationResult } from "../../utils/phoneValidationRules";
 import { useModalDismiss } from "../../hooks/useModalDismiss";
 import { createRealTransaction } from "../../services/dbService";
+import { recordConfirmedSale } from "../../services/creatorPayoutLedger";
 
 export type { CreatorPlatformOffer };
 
@@ -168,6 +169,11 @@ export const OfferCheckoutModal: React.FC<OfferCheckoutModalProps> = ({
           setPaymentError(confirmationData.error || "Le paiement est en attente de confirmation.");
           return;
         }
+        await recordConfirmedSale({
+          creatorId: offer.creatorId || offer.companyId,
+          amount: currentPlan.price,
+          invoiceId: invoiceData.invoice.paymentId,
+        });
       } catch (err: any) {
         setIsProcessing(false);
         setPaymentError("Impossible de créer ou confirmer la facture. Réessayez.");
