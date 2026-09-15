@@ -145,6 +145,8 @@ export const OfferCheckoutModal: React.FC<OfferCheckoutModalProps> = ({
             grossAmount: currentPlan.price,
             currency: offer.currency || "XAF",
             paymentProvider,
+            operatorId: mobileMoneyValidation?.operatorId,
+            countryCode: mobileMoneyValidation?.countryCode,
             phoneNumber: mobileMoneyValidation?.normalizedNumber,
             expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
           }),
@@ -171,7 +173,11 @@ export const OfferCheckoutModal: React.FC<OfferCheckoutModalProps> = ({
         }
         await recordConfirmedSale({
           creatorId: offer.creatorId || offer.companyId,
-          amount: currentPlan.price,
+          amount: confirmationData.invoice.creatorNetAmount,
+          grossAmount: confirmationData.invoice.grossAmount,
+          providerFee: confirmationData.invoice.providerFee,
+          platformFee: confirmationData.invoice.platformFee,
+          currency: confirmationData.invoice.currency,
           invoiceId: invoiceData.invoice.paymentId,
         });
       } catch (err: any) {

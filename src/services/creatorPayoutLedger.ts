@@ -21,6 +21,10 @@ export type PayoutDestination = "mobile_money" | "bank";
 export interface LedgerEntry {
   creatorId: string;
   amount: number;
+  grossAmount?: number;
+  providerFee?: number;
+  platformFee?: number;
+  currency?: string;
   type: LedgerEntryType;
   status: LedgerStatus;
   createdAt: string;
@@ -58,11 +62,23 @@ function availableFromEntries(entries: LedgerEntry[], now = Date.now()) {
   }, 0);
 }
 
-export async function recordConfirmedSale(input: { creatorId: string; amount: number; invoiceId: string }) {
+export async function recordConfirmedSale(input: {
+  creatorId: string;
+  amount: number;
+  grossAmount: number;
+  providerFee: number;
+  platformFee: number;
+  currency: string;
+  invoiceId: string;
+}) {
   const now = new Date();
   const entry: LedgerEntry = {
     creatorId: input.creatorId,
     amount: input.amount,
+    grossAmount: input.grossAmount,
+    providerFee: input.providerFee,
+    platformFee: input.platformFee,
+    currency: input.currency,
     type: "vente_confirmee",
     status: "en_attente",
     createdAt: now.toISOString(),

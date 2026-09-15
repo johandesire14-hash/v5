@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 export type InvoiceStatus = "pending" | "paid" | "failed" | "refunded";
-export type PaymentProvider = "wave" | "kpay";
+export type PaymentProvider = "wave" | "kpay" | "stripe";
 
 export interface Invoice {
   paymentId: string;
@@ -21,6 +21,8 @@ export interface Invoice {
   platformFee: number;
   creatorNetAmount: number;
   paymentProvider: PaymentProvider;
+  operatorId?: string;
+  countryCode?: string;
   phoneNumber?: string;
   providerTransactionId?: string;
   confirmedAt?: string;
@@ -41,6 +43,50 @@ export interface Refund {
 const invoices = new Map<string, Invoice>();
 const refunds = new Map<string, Refund>();
 let invoiceSequence = 0;
+
+const MANSA_PLATFORM_FEE_RATE = Math.min(
+  0.05,
+  Math.max(0, Number(process.env.MANSA_PLATFORM_FEE_RATE || 0.04)),
+);
+
+// KPay rates supplied for the launch markets. The provider webhook remains
+// authoritative in production; these rates are only the test-mode estimate.
+const KPAY_PAYMENT_RATES: Record<string, number> = {
+  "BJ:mtn": 0.042,
+  "BJ:moov": 0.04,
+  "CM:mtn": 0.02,
+  "CM:orange": 0.02,
+  "CI:mtn": 0.02,
+  "CI:orange": 0.03,
+  "CD:vodacom": 0.03,
+  "CD:airtel": 0.04,
+  "CD:orange": 0.04,
+  "GA:airtel": 0.03,
+  "CG:airtel": 0.05,
+  "CG:mtn": 0.05,
+  "RW:airtel": 0.03,
+  "RW:mtn": 0.04,
+  "SN:free": 0.03,
+  "SN:orange": 0.03,
+  "SL:orange": 0.04,
+  "UG:airtel": 0.035,
+  "UG:mtn": 0.04,
+  "ZM:airtel": 0.03,
+  "ZM:mtn": 0.03,
+  "ZM:zamtel": 0.03,
+};
+
+export function estimateProviderFee(input: {
+  provider: PaymentProvider;
+  grossAmount: number;
+  countryCode?: string;
+  operatorId?: string;
+}) {
+  if (input.provider === "wave") return Math.round(input.grossAmount * 0.01);
+  if (input.provider === "stripe") return Math.round(input.grossAmount * 0.029);
+  const rate = KPAY_PAYMENT_RATES[`${input.countryCode || ""}:${input.operatorId || ""}`] || 0;
+  return Math.round(input.grossAmount * rate);
+}
 
 function nextPaymentId() {
   return `PAY-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
@@ -86,8 +132,14 @@ export function confirmInvoice(paymentId: string, providerTransactionId: string,
   if (invoice.status !== "pending") throw new Error("INVOICE_NOT_PAYABLE");
   if (Math.round(amount) !== Math.round(invoice.grossAmount)) throw new Error("AMOUNT_MISMATCH");
 
-  const platformFee = Math.round(invoice.grossAmount * 0.03);
-  invoice.providerFee = Math.max(0, Math.round(providerFee));
+  const estimatedProviderFee = estimateProviderFee({
+    provider: invoice.paymentProvider,
+    grossAmount: invoice.grossAmount,
+    countryCode: invoice.countryCode,
+    operatorId: invoice.operatorId,
+  });
+  invoice.providerFee = Math.max(0, Math.round(providerFee || estimatedProviderFee));
+  const platformFee = Math.round(invoice.grossAmount * MANSA_PLATFORM_FEE_RATE);
   invoice.platformFee = platformFee;
   invoice.creatorNetAmount = Math.max(0, invoice.grossAmount - invoice.providerFee - platformFee);
   invoice.providerTransactionId = providerTransactionId;
