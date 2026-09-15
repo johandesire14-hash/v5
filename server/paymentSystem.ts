@@ -46,7 +46,7 @@ let invoiceSequence = 0;
 
 const MANSA_PLATFORM_FEE_RATE = Math.min(
   0.05,
-  Math.max(0, Number(process.env.MANSA_PLATFORM_FEE_RATE || 0.04)),
+  Math.max(0, Number(process.env.MANSA_PLATFORM_FEE_RATE || 0.03)),
 );
 
 // KPay rates supplied for the launch markets. The provider webhook remains
