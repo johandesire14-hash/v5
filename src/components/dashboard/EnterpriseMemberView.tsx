@@ -102,6 +102,7 @@ interface EnterpriseMemberViewProps {
   onSeedSimulationData?: () => void;
   onOpenCreatorDashboard?: () => void;
   onCreateProduct?: () => void;
+  onOpenCreatorApplications?: () => void;
 }
 
 export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
@@ -117,6 +118,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   onSeedSimulationData,
   onOpenCreatorDashboard,
   onCreateProduct,
+  onOpenCreatorApplications,
 }) => {
   // Navigation inside the enterprise hub - defaults to "accueil" for company home view
   const [activeTab, setActiveTab] = useState<"accueil" | "support" | "telegram" | "discord">("accueil");
@@ -156,6 +158,9 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
   const [isPostComposerOpen, setIsPostComposerOpen] = useState(false);
   const [postText, setPostText] = useState("");
+  const [selectedMemberProductId, setSelectedMemberProductId] = useState<string | null>(
+    subscription.productId || null
+  );
 
   React.useEffect(() => {
     setCurrentSub(subscription);
@@ -174,29 +179,37 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     setPreviewMode("admin");
     setIsPreviewMenuOpen(false);
     setIsPostComposerOpen(false);
-  }, [companyId]);
+    setSelectedMemberProductId(subscription.productId || null);
+  }, [companyId, subscription.productId]);
 
   // Identifiants réels des offres débloquées par ce membre
   const memberUnlockedOfferIds = React.useMemo(() => {
     return normalizeUnlockedOfferIds(currentSub);
   }, [currentSub]);
 
+  const scopedMemberUnlockedOfferIds = React.useMemo(() => {
+    if (!selectedMemberProductId) return memberUnlockedOfferIds;
+    return memberUnlockedOfferIds.filter(
+      (offerId) => offerId.toLowerCase() === selectedMemberProductId.toLowerCase()
+    );
+  }, [memberUnlockedOfferIds, selectedMemberProductId]);
+
   // Ressources strictement autorisées pour ce membre et cette entreprise
   const authorizedTelegramChannels = React.useMemo(() => {
-    return getMemberAuthorizedTelegramChannels(companyId, memberUnlockedOfferIds);
-  }, [companyId, memberUnlockedOfferIds]);
+    return getMemberAuthorizedTelegramChannels(companyId, scopedMemberUnlockedOfferIds);
+  }, [companyId, scopedMemberUnlockedOfferIds]);
 
   const authorizedDiscordChannels = React.useMemo(() => {
-    return getMemberAuthorizedDiscordChannels(companyId, memberUnlockedOfferIds);
-  }, [companyId, memberUnlockedOfferIds]);
+    return getMemberAuthorizedDiscordChannels(companyId, scopedMemberUnlockedOfferIds);
+  }, [companyId, scopedMemberUnlockedOfferIds]);
 
   const authorizedEbooks = React.useMemo(() => {
-    return getMemberAuthorizedEbooks(companyId, memberUnlockedOfferIds);
-  }, [companyId, memberUnlockedOfferIds]);
+    return getMemberAuthorizedEbooks(companyId, scopedMemberUnlockedOfferIds);
+  }, [companyId, scopedMemberUnlockedOfferIds]);
 
   const authorizedCourses = React.useMemo(() => {
-    return getMemberAuthorizedCourses(companyId, memberUnlockedOfferIds);
-  }, [companyId, memberUnlockedOfferIds]);
+    return getMemberAuthorizedCourses(companyId, scopedMemberUnlockedOfferIds);
+  }, [companyId, scopedMemberUnlockedOfferIds]);
 
   // Vérification d'accès stricte : débloqué uniquement si l'offre achetée accorde la ressource précise
   const hasTelegramAccess = authorizedTelegramChannels.length > 0;
@@ -713,7 +726,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         body: JSON.stringify({
           companyId,
           ebookId: ebook.id,
-          unlockedOfferIds: memberUnlockedOfferIds,
+          unlockedOfferIds: scopedMemberUnlockedOfferIds,
           userEmail: user?.email,
         }),
       });
@@ -742,7 +755,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         body: JSON.stringify({
           companyId,
           courseId: course.id,
-          unlockedOfferIds: memberUnlockedOfferIds,
+          unlockedOfferIds: scopedMemberUnlockedOfferIds,
           userEmail: user?.email,
         }),
       });
@@ -856,7 +869,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         body: JSON.stringify({
           companyId,
           channelId: target.id,
-          unlockedOfferIds: memberUnlockedOfferIds,
+          unlockedOfferIds: scopedMemberUnlockedOfferIds,
           userEmail: user?.email,
         }),
       });
@@ -876,7 +889,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
       // Fallback local avec le moteur de droits d'accès
       const localCheck = verifyMemberResourceAccess({
         companyId,
-        unlockedOfferIds: memberUnlockedOfferIds,
+        unlockedOfferIds: scopedMemberUnlockedOfferIds,
         resourceType: "telegram",
         resourceId: target.id,
       });
@@ -932,7 +945,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         body: JSON.stringify({
           companyId,
           channelId: target.id,
-          unlockedOfferIds: memberUnlockedOfferIds,
+          unlockedOfferIds: scopedMemberUnlockedOfferIds,
           userEmail: user?.email,
         }),
       });
@@ -951,7 +964,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     } catch {
       const localCheck = verifyMemberResourceAccess({
         companyId,
-        unlockedOfferIds: memberUnlockedOfferIds,
+        unlockedOfferIds: scopedMemberUnlockedOfferIds,
         resourceType: "discord",
         resourceId: target.id,
       });
@@ -1151,12 +1164,22 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                       type="button"
                       key={offer.id}
                       onClick={() => {
-                        setCompanyTab("produits");
-                        setActiveTab("accueil");
+                        const hasProductAccess = memberUnlockedOfferIds.some(
+                          (offerId) => offerId.toLowerCase() === offer.id.toLowerCase()
+                        );
+                        if (hasProductAccess) {
+                          setSelectedMemberProductId(offer.id);
+                          setCompanyTab("accueil");
+                          setActiveTab("accueil");
+                        } else {
+                          setCompanyTab("produits");
+                          setActiveTab("accueil");
+                          setCheckoutModalOffer(offer);
+                        }
                         setIsPreviewMenuOpen(false);
                         if (isMobile) setIsMobileSidebarOpen(false);
                       }}
-                      className="w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-zinc-300 hover:bg-white/5 hover:text-white transition-colors"
+                      className={`w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors ${selectedMemberProductId === offer.id ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5 hover:text-white"}`}
                     >
                       <span className="truncate">{offer.title}</span>
                       <span className="shrink-0 text-[10px] text-zinc-500">{offer.subscribersCount || "0"}</span>
@@ -1221,6 +1244,23 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
             <MessageSquare className="size-4 text-zinc-300" />
             <span>Assistance</span>
           </button>
+          {isCompanyOwner && (
+            <button
+              onClick={() => {
+                if (onOpenCreatorApplications) {
+                  onOpenCreatorApplications();
+                } else {
+                  setActiveTab("accueil");
+                  setCompanyTab("produits");
+                }
+                if (isMobile) setIsMobileSidebarOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer min-h-[44px] text-zinc-300 hover:bg-white/5 hover:text-white"
+            >
+              <Plus className="size-4 text-blue-400" />
+              <span>Ajouter une application</span>
+            </button>
+          )}
         </nav>
 
         {/* Section inférieure : Produits et fonctionnalités réels de l’entreprise */}

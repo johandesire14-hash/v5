@@ -1093,6 +1093,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               setEditingProduct(null);
               setIsProductStudioOpen(true);
             }}
+            onOpenCreatorApplications={() => {
+              const creatorCompany = companies.find(
+                (company) => company.id === currentCommunitySub.companyId || company.id === currentCommunitySub.id
+              );
+              if (creatorCompany) {
+                setActiveWorkspaceId(creatorCompany.id);
+              }
+              setActiveNav("applications");
+            }}
             onSeedSimulationData={handleSeedSimulationData}
           />
         </div>
