@@ -163,6 +163,19 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
   const companyId = currentSub.companyId || currentSub.id;
 
+  // Chaque entreprise possède son propre état de navigation et de vérification.
+  // Un changement d'entreprise ne doit jamais conserver Telegram, Discord ou un QR/code de l'entreprise précédente.
+  React.useEffect(() => {
+    setActiveTab("accueil");
+    setCompanyTab("accueil");
+    setTelegramFlowStep("channels_list");
+    setDiscordFlowStep("channels_list");
+    setCheckoutModalOffer(null);
+    setPreviewMode("admin");
+    setIsPreviewMenuOpen(false);
+    setIsPostComposerOpen(false);
+  }, [companyId]);
+
   // Identifiants réels des offres débloquées par ce membre
   const memberUnlockedOfferIds = React.useMemo(() => {
     return normalizeUnlockedOfferIds(currentSub);
@@ -296,9 +309,49 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [isManageMembershipModalOpen, setIsManageMembershipModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [copiedLinkToast, setCopiedLinkToast] = useState(false);
+  const [expandedCommentPosts, setExpandedCommentPosts] = useState<Record<string, boolean>>({});
   const [isEbookModalOpen, setIsEbookModalOpen] = useState(false);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const optionsMenuRef = React.useRef<HTMLDivElement>(null);
+
+  const commentReplies: Record<string, Array<{ author: string; text: string; time: string }>> = {
+    "post-pinned": [
+      { author: "Membre Premium", text: "Merci pour la mise à jour, c'est très clair.", time: "Il y a 20 min" },
+      { author: currentSub.companyName, text: "Merci pour votre retour. Nous restons disponibles.", time: "Il y a 12 min" },
+    ],
+    "post-2": [
+      { author: "Aïcha", text: "La synchronisation est-elle déjà active pour tous les membres ?", time: "Il y a 1 h" },
+      { author: currentSub.companyName, text: "Oui, le déploiement est terminé.", time: "Il y a 45 min" },
+    ],
+    "post-3": [
+      { author: "Membre Premium", text: "Le fichier est bien téléchargé, merci.", time: "Il y a 2 h" },
+      { author: currentSub.companyName, text: "Parfait, bonne lecture !", time: "Il y a 1 h" },
+    ],
+  };
+
+  const renderCommentReplies = (postId: string) => {
+    if (!expandedCommentPosts[postId]) return null;
+    if (!hasPaidOffer && !isCompanyOwner) {
+      return (
+        <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300">
+          Les réponses sont disponibles après l'achat d'un produit.
+        </div>
+      );
+    }
+    return (
+      <div className="mt-2 space-y-2 rounded-xl border border-white/5 bg-black/10 p-3">
+        {commentReplies[postId].map((reply, index) => (
+          <div key={`${postId}-reply-${index}`} className="border-b border-white/5 pb-2 last:border-0 last:pb-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold text-white">{reply.author}</span>
+              <span className="text-[10px] text-zinc-500">{reply.time}</span>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-zinc-300">{reply.text}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   // Click outside listener for menu ⋮
   React.useEffect(() => {
@@ -332,6 +385,9 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
   // Handler: Leave the enterprise completely
   const handleLeaveEnterprise = () => {
+    // Une prévisualisation ou un accès visiteur ne constitue pas une adhésion.
+    // Le clic est volontairement silencieux : aucune suppression ni notification n'est déclenchée.
+    if (currentSub.hasJoined !== true) return;
     const userKey = user?.email || "default";
     removeSubscription(userKey, currentSub.id);
     if (onBackToPersonal) {
@@ -1065,6 +1121,48 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     <Plus className="size-3.5" /> Nouveau produit
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isCompanyOwner && (
+          <div className="rounded-xl border border-white/10 bg-[#14161b] p-1.5">
+            <button
+              type="button"
+              onClick={() => setIsPreviewMenuOpen((open) => !open)}
+              className="w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-white hover:bg-white/5 transition-colors"
+              aria-expanded={isPreviewMenuOpen}
+              aria-haspopup="menu"
+            >
+              <span className="flex items-center gap-2">
+                <Package className="size-3.5 text-amber-400" />
+                Produits
+              </span>
+              <ChevronDown className={`size-3.5 text-zinc-400 transition-transform ${isPreviewMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isPreviewMenuOpen && (
+              <div className="mt-1 border-t border-white/10 pt-1">
+                {enterpriseOffers.length === 0 ? (
+                  <div className="px-2.5 py-2 text-[11px] text-zinc-500">Aucun produit disponible</div>
+                ) : (
+                  enterpriseOffers.map((offer) => (
+                    <button
+                      type="button"
+                      key={offer.id}
+                      onClick={() => {
+                        setCompanyTab("produits");
+                        setActiveTab("accueil");
+                        setIsPreviewMenuOpen(false);
+                        if (isMobile) setIsMobileSidebarOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-zinc-300 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <span className="truncate">{offer.title}</span>
+                      <span className="shrink-0 text-[10px] text-zinc-500">{offer.subscribersCount || "0"}</span>
+                    </button>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -2116,10 +2214,14 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                           </button>
 
                           {/* Comments counter */}
-                          <div className="flex items-center gap-1.5 py-1 px-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedCommentPosts((prev) => ({ ...prev, "post-pinned": !prev["post-pinned"] }))}
+                            className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors"
+                          >
                             <MessageCircle className="size-3.5" />
                             <span>18 commentaires</span>
-                          </div>
+                          </button>
                         </div>
 
                         {/* Share */}
@@ -2135,6 +2237,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                           <span>Partager</span>
                         </button>
                       </div>
+                      {renderCommentReplies("post-pinned")}
                     </div>
 
                     {/* Deuxième Publication : Mise à jour technique */}
@@ -2198,10 +2301,14 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                             <span>{likesCounts["post-2"]}</span>
                           </button>
 
-                          <div className="flex items-center gap-1.5 py-1 px-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedCommentPosts((prev) => ({ ...prev, "post-2": !prev["post-2"] }))}
+                            className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors"
+                          >
                             <MessageCircle className="size-3.5" />
                             <span>9 commentaires</span>
-                          </div>
+                          </button>
                         </div>
 
                         <button
@@ -2216,6 +2323,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                           <span>Partager</span>
                         </button>
                       </div>
+                      {renderCommentReplies("post-2")}
                     </div>
 
                     {/* Troisième Publication : Fichier / Ressource */}
@@ -2299,10 +2407,14 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                             <span>{likesCounts["post-3"]}</span>
                           </button>
 
-                          <div className="flex items-center gap-1.5 py-1 px-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedCommentPosts((prev) => ({ ...prev, "post-3": !prev["post-3"] }))}
+                            className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors"
+                          >
                             <MessageCircle className="size-3.5" />
                             <span>12 commentaires</span>
-                          </div>
+                          </button>
                         </div>
 
                         <button
@@ -2317,6 +2429,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                           <span>Partager</span>
                         </button>
                       </div>
+                      {renderCommentReplies("post-3")}
                     </div>
 
                 </div>
