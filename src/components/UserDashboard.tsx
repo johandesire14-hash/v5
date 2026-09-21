@@ -1089,6 +1089,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               }
               setActiveNav("accueil");
             }}
+            onCreateProduct={() => {
+              setEditingProduct(null);
+              setIsProductStudioOpen(true);
+            }}
             onSeedSimulationData={handleSeedSimulationData}
           />
         </div>

@@ -50,6 +50,8 @@ import {
   Flag,
   BookOpen,
   GraduationCap,
+  Eye,
+  EyeOff,
   TrendingUp,
   Layers,
   PenLine,
@@ -99,6 +101,7 @@ interface EnterpriseMemberViewProps {
   onOpenMarketplace?: () => void;
   onSeedSimulationData?: () => void;
   onOpenCreatorDashboard?: () => void;
+  onCreateProduct?: () => void;
 }
 
 export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
@@ -113,6 +116,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   onOpenMarketplace,
   onSeedSimulationData,
   onOpenCreatorDashboard,
+  onCreateProduct,
 }) => {
   // Navigation inside the enterprise hub - defaults to "accueil" for company home view
   const [activeTab, setActiveTab] = useState<"accueil" | "support" | "telegram" | "discord">("accueil");
@@ -351,6 +355,16 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     return [];
   }, [currentSub.companyId, currentSub.id]);
 
+  type PreviewMode = "admin" | "public" | "hidden" | `product:${string}`;
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("admin");
+  const [isPreviewMenuOpen, setIsPreviewMenuOpen] = useState(false);
+  const selectedPreviewOfferId = previewMode.startsWith("product:")
+    ? previewMode.slice("product:".length)
+    : null;
+  const selectedPreviewOffer = selectedPreviewOfferId
+    ? enterpriseOffers.find((offer) => offer.id === selectedPreviewOfferId)
+    : undefined;
+
   // Le mode compact est automatique sur les écrans étroits et complet sur desktop.
   const [isCompact, setIsCompact] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
@@ -511,6 +525,23 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     authorizedEbooks,
     authorizedCourses,
   ]);
+
+  const visibleEcosystemFeatures = React.useMemo(() => {
+    if (!isCompanyOwner || previewMode === "admin" || previewMode === "public") {
+      return ecosystemFeatures;
+    }
+    if (previewMode === "hidden") return [];
+    if (!selectedPreviewOffer) return ecosystemFeatures;
+
+    return ecosystemFeatures.filter((feature) => {
+      if (feature.matchingOffer?.id === selectedPreviewOffer.id) return true;
+      if (selectedPreviewOffer.includedApps?.some((app) => app.toLowerCase().includes(feature.featureKey))) return true;
+      if (feature.featureKey === "ebook" && (selectedPreviewOffer.ebooks?.length || 0) > 0) return true;
+      if (feature.featureKey === "course" && (selectedPreviewOffer.courses?.length || 0) > 0) return true;
+      if (feature.featureKey === "resource" && (selectedPreviewOffer.customResources?.length || 0) > 0) return true;
+      return false;
+    });
+  }, [ecosystemFeatures, isCompanyOwner, previewMode, selectedPreviewOffer]);
 
   const handleEcosystemFeatureClick = (
     feat: (typeof ecosystemFeatures)[0],
@@ -952,6 +983,93 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
           )}
         </div>
 
+        {isCompanyOwner && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsPreviewMenuOpen((open) => !open)}
+              className="w-full flex items-center justify-between rounded-xl border border-white/10 bg-[#14161b] px-3.5 py-2.5 text-left hover:border-white/20 transition-colors"
+              aria-expanded={isPreviewMenuOpen}
+              aria-haspopup="menu"
+            >
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Aperçu en tant que</div>
+                <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-white truncate">
+                  {previewMode === "admin" && <Eye className="size-3.5 text-blue-400 shrink-0" />}
+                  {previewMode === "public" && <Users className="size-3.5 text-emerald-400 shrink-0" />}
+                  {previewMode === "hidden" && <EyeOff className="size-3.5 text-zinc-400 shrink-0" />}
+                  {previewMode.startsWith("product:") && <Package className="size-3.5 text-amber-400 shrink-0" />}
+                  <span className="truncate">
+                    {previewMode === "admin"
+                      ? "Administrateur"
+                      : previewMode === "public"
+                      ? "Public"
+                      : previewMode === "hidden"
+                      ? "Masqué"
+                      : selectedPreviewOffer?.title || "Produit"}
+                  </span>
+                </div>
+              </div>
+              <ChevronDown className={`size-4 text-zinc-400 transition-transform ${isPreviewMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {isPreviewMenuOpen && (
+              <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-white/10 bg-[#17191e] p-1.5 shadow-2xl">
+                <button
+                  type="button"
+                  onClick={() => { setPreviewMode("admin"); setIsPreviewMenuOpen(false); }}
+                  className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-left transition-colors ${previewMode === "admin" ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5"}`}
+                >
+                  <Eye className="size-3.5 text-blue-400" /> Administrateur
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setPreviewMode("public"); setIsPreviewMenuOpen(false); }}
+                  className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-left transition-colors ${previewMode === "public" ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5"}`}
+                >
+                  <Users className="size-3.5 text-emerald-400" /> Public
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setPreviewMode("hidden"); setIsPreviewMenuOpen(false); }}
+                  className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-left transition-colors ${previewMode === "hidden" ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5"}`}
+                >
+                  <EyeOff className="size-3.5 text-zinc-400" /> Masqué
+                </button>
+
+                <div className="my-1.5 border-t border-white/10 pt-1.5">
+                  <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Produits</div>
+                  {enterpriseOffers.length === 0 ? (
+                    <div className="px-2.5 py-2 text-[11px] text-zinc-500">Aucun produit créé</div>
+                  ) : (
+                    enterpriseOffers.map((offer) => (
+                      <button
+                        type="button"
+                        key={offer.id}
+                        onClick={() => { setPreviewMode(`product:${offer.id}`); setIsPreviewMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs text-left transition-colors ${selectedPreviewOfferId === offer.id ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5"}`}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Package className="size-3.5 shrink-0 text-amber-400" />
+                          <span className="truncate">{offer.title}</span>
+                        </span>
+                        <span className="shrink-0 text-[10px] text-zinc-500">{offer.subscribersCount || "0"}</span>
+                      </button>
+                    ))
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setIsPreviewMenuOpen(false); onCreateProduct?.(); }}
+                    className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-white/10 px-2.5 pt-2 text-xs text-zinc-300 hover:text-white"
+                  >
+                    <Plus className="size-3.5" /> Nouveau produit
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Navigation Items (En haut) : Accueil, Assistance, etc. */}
         <nav className="space-y-1 text-xs font-medium">
           {/* Tableau de bord : visible uniquement pour le créateur propriétaire */}
@@ -1008,20 +1126,20 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         </nav>
 
         {/* Section inférieure : Produits et fonctionnalités réels de l’entreprise */}
-        {ecosystemFeatures.length > 0 && (
+        {visibleEcosystemFeatures.length > 0 && (
           <div className="pt-3 border-t border-white/[0.08] space-y-1.5">
             <div className="px-3 pb-1 flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                 Produits & Fonctionnalités
               </span>
               <span className="text-[10px] font-mono text-zinc-500">
-                {ecosystemFeatures.filter((f) => f.isAccessible).length}/
-                {ecosystemFeatures.length}
+                {visibleEcosystemFeatures.filter((f) => f.isAccessible).length}/
+                {visibleEcosystemFeatures.length}
               </span>
             </div>
 
             <div className="space-y-1">
-              {ecosystemFeatures.map((item) => {
+              {visibleEcosystemFeatures.map((item) => {
                 const isAccessible = item.isAccessible;
                 const isCurrentActive =
                   (item.id === "telegram" && activeTab === "telegram") ||
