@@ -434,6 +434,59 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     ? enterpriseOffers.find((offer) => offer.id === selectedPreviewOfferId)
     : undefined;
 
+  type CreatorAppId = "telegram" | "discord" | "courses" | "files";
+  const [creatorAppStep, setCreatorAppStep] = useState<"closed" | "choose" | "link" | "content">("closed");
+  const [selectedCreatorApp, setSelectedCreatorApp] = useState<CreatorAppId | null>(null);
+  const [linkedCreatorProductIds, setLinkedCreatorProductIds] = useState<string[]>([]);
+  const [creatorCourseName, setCreatorCourseName] = useState("");
+  const [creatorCourseDescription, setCreatorCourseDescription] = useState("");
+  const [creatorChapterNames, setCreatorChapterNames] = useState<string[]>(["Introduction"]);
+  const [creatorNewChapterName, setCreatorNewChapterName] = useState("");
+  const [creatorFileName, setCreatorFileName] = useState("");
+
+  const creatorAppMeta: Record<CreatorAppId, { title: string; description: string; icon: string }> = {
+    telegram: { title: "Telegram", description: "Canal ou groupe Telegram lié à un ou plusieurs produits.", icon: "✈️" },
+    discord: { title: "Discord", description: "Serveur Discord et accès membres par produit.", icon: "🎮" },
+    courses: { title: "Cours & vidéos", description: "Cours, coaching et formations avec chapitres.", icon: "🎓" },
+    files: { title: "Fichier", description: "Fichiers, téléchargements instantanés et e-books.", icon: "📁" },
+  };
+
+  const openCreatorAppWorkflow = () => {
+    setSelectedCreatorApp(null);
+    setLinkedCreatorProductIds(selectedPreviewOfferId ? [selectedPreviewOfferId] : []);
+    setCreatorAppStep("choose");
+  };
+
+  const chooseCreatorApp = (appId: CreatorAppId) => {
+    setSelectedCreatorApp(appId);
+    setCreatorAppStep("link");
+  };
+
+  const continueCreatorAppContent = () => {
+    if (!selectedCreatorApp || linkedCreatorProductIds.length === 0) return;
+    setCreatorAppStep("content");
+  };
+
+  const finishCreatorAppWorkflow = () => {
+    if (!selectedCreatorApp) return;
+    const storageKey = `mansa_creator_apps_${companyId}`;
+    const currentApps = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    const nextApp = {
+      appId: selectedCreatorApp,
+      productIds: linkedCreatorProductIds,
+      title: selectedCreatorApp === "courses" ? creatorCourseName : creatorFileName,
+      description: creatorCourseDescription,
+      chapters: creatorChapterNames,
+      updatedAt: new Date().toISOString(),
+    };
+    const withoutCurrent = Array.isArray(currentApps)
+      ? currentApps.filter((app: { appId?: string }) => app.appId !== selectedCreatorApp)
+      : [];
+    localStorage.setItem(storageKey, JSON.stringify([...withoutCurrent, nextApp]));
+    setCreatorAppStep("closed");
+    setSelectedCreatorApp(null);
+  };
+
   // Le mode compact est automatique sur les écrans étroits et complet sur desktop.
   const [isCompact, setIsCompact] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
@@ -1247,12 +1300,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
           {isCompanyOwner && (
             <button
               onClick={() => {
-                if (onOpenCreatorApplications) {
-                  onOpenCreatorApplications();
-                } else {
-                  setActiveTab("accueil");
-                  setCompanyTab("produits");
-                }
+                openCreatorAppWorkflow();
                 if (isMobile) setIsMobileSidebarOpen(false);
               }}
               className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer min-h-[44px] text-zinc-300 hover:bg-white/5 hover:text-white"
@@ -4008,6 +4056,119 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                 Fermer
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {creatorAppStep !== "closed" && isCompanyOwner && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#12141c] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-blue-400">{currentSub.companyName}</div>
+                <h2 className="mt-1 text-lg font-bold text-white">
+                  {creatorAppStep === "choose" ? "Ajouter une application" : creatorAppStep === "link" ? "Accès à l’application" : `Configurer ${selectedCreatorApp ? creatorAppMeta[selectedCreatorApp].title : "l’application"}`}
+                </h2>
+                <p className="mt-1 text-xs text-zinc-400">
+                  {creatorAppStep === "choose" ? "Choisissez l’application à ajouter à cette entreprise." : creatorAppStep === "link" ? "Définissez quels produits peuvent accéder à cette application." : "Ajoutez ou modifiez le contenu sans quitter la Communauté."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCreatorAppStep("closed")}
+                className="rounded-lg p-2 text-zinc-400 hover:bg-white/5 hover:text-white"
+                aria-label="Fermer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {creatorAppStep === "choose" && (
+              <div className="grid gap-3 p-5 sm:grid-cols-2">
+                {(Object.keys(creatorAppMeta) as CreatorAppId[]).map((appId) => (
+                  <button
+                    type="button"
+                    key={appId}
+                    onClick={() => chooseCreatorApp(appId)}
+                    className="rounded-xl border border-white/10 bg-[#0c0d0e] p-4 text-left transition-colors hover:border-blue-500/50 hover:bg-white/[0.04]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-10 items-center justify-center rounded-xl bg-white/5 text-2xl">{creatorAppMeta[appId].icon}</span>
+                      <div>
+                        <div className="text-sm font-bold text-white">{creatorAppMeta[appId].title}</div>
+                        <div className="mt-1 text-[11px] leading-relaxed text-zinc-400">{creatorAppMeta[appId].description}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {creatorAppStep === "link" && selectedCreatorApp && (
+              <div className="space-y-4 p-5">
+                <div className="rounded-xl border border-white/10 bg-[#0c0d0e] p-3 text-xs text-zinc-300">
+                  Application sélectionnée : <strong className="text-white">{creatorAppMeta[selectedCreatorApp].title}</strong>
+                </div>
+                <div className="space-y-2">
+                  {enterpriseOffers.length === 0 ? (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-300">Créez d’abord un produit pour lier cette application.</div>
+                  ) : enterpriseOffers.map((offer) => {
+                    const checked = linkedCreatorProductIds.includes(offer.id);
+                    return (
+                      <label key={offer.id} className="flex cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-[#0c0d0e] px-4 py-3 hover:border-white/20">
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-white">{offer.title}</span>
+                          <span className="mt-1 block text-[11px] text-zinc-500">{offer.subscribersCount || 0} actif(s) · {offer.priceDisplay || "Gratuit"}</span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => setLinkedCreatorProductIds((ids) => checked ? ids.filter((id) => id !== offer.id) : [...ids, offer.id])}
+                          className="size-4 accent-blue-500"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between border-t border-white/10 pt-4">
+                  <button type="button" onClick={() => setCreatorAppStep("choose")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour</button>
+                  <button type="button" disabled={linkedCreatorProductIds.length === 0} onClick={continueCreatorAppContent} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40">Fait · Ajouter le contenu</button>
+                </div>
+              </div>
+            )}
+
+            {creatorAppStep === "content" && selectedCreatorApp && (
+              <div className="space-y-4 p-5">
+                {(selectedCreatorApp === "courses" || selectedCreatorApp === "files") && (
+                  <>
+                    <label className="block space-y-1.5">
+                      <span className="text-xs font-semibold text-zinc-300">{selectedCreatorApp === "courses" ? "Nom du cours" : "Nom du fichier"}</span>
+                      <input value={selectedCreatorApp === "courses" ? creatorCourseName : creatorFileName} onChange={(event) => selectedCreatorApp === "courses" ? setCreatorCourseName(event.target.value) : setCreatorFileName(event.target.value)} placeholder={selectedCreatorApp === "courses" ? "Ex. Formation Trading débutant" : "Ex. Guide PDF premium"} className="w-full rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" />
+                    </label>
+                    {selectedCreatorApp === "courses" ? (
+                      <>
+                        <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Description</span><textarea value={creatorCourseDescription} onChange={(event) => setCreatorCourseDescription(event.target.value)} rows={3} className="w-full resize-none rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
+                        <div className="rounded-xl border border-white/10 bg-[#0c0d0e] p-4">
+                          <div className="mb-3 flex items-center justify-between"><span className="text-xs font-semibold text-white">Chapitres</span><span className="text-[10px] text-zinc-500">YouTube · vidéo · pièces jointes · texte</span></div>
+                          <div className="space-y-2">{creatorChapterNames.map((chapter, index) => <div key={`${chapter}-${index}`} className="flex items-center gap-2"><input value={chapter} onChange={(event) => setCreatorChapterNames((chapters) => chapters.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#161822] px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={() => setCreatorChapterNames((chapters) => chapters.filter((_, itemIndex) => itemIndex !== index))} className="rounded-lg p-2 text-zinc-500 hover:bg-white/5 hover:text-red-300"><X className="size-3.5" /></button></div>)}</div>
+                          <div className="mt-3 flex gap-2"><input value={creatorNewChapterName} onChange={(event) => setCreatorNewChapterName(event.target.value)} placeholder="Nom du nouveau chapitre" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#161822] px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={() => { if (creatorNewChapterName.trim()) { setCreatorChapterNames((chapters) => [...chapters, creatorNewChapterName.trim()]); setCreatorNewChapterName(""); } }} className="rounded-lg bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/15">+ Chapitre</button></div>
+                        </div>
+                      </>
+                    ) : (
+                      <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Contenu du fichier</span><input type="file" className="block w-full rounded-xl border border-dashed border-white/20 bg-[#0c0d0e] px-3 py-5 text-xs text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white" /></label>
+                    )}
+                  </>
+                )}
+                {(selectedCreatorApp === "telegram" || selectedCreatorApp === "discord") && (
+                  <div className="rounded-xl border border-white/10 bg-[#0c0d0e] p-5 text-center">
+                    <div className="text-3xl">{creatorAppMeta[selectedCreatorApp].icon}</div>
+                    <p className="mt-2 text-sm font-semibold text-white">Configurer {creatorAppMeta[selectedCreatorApp].title}</p>
+                    <p className="mt-1 text-xs text-zinc-400">Les produits sélectionnés sont enregistrés. Continuez la connexion du canal ou du serveur depuis l’onglet correspondant de cette entreprise.</p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t border-white/10 pt-4"><button type="button" onClick={() => setCreatorAppStep("link")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour</button><button type="button" onClick={finishCreatorAppWorkflow} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500">Enregistrer dans cette entreprise</button></div>
+              </div>
+            )}
           </div>
         </div>
       )}
