@@ -443,6 +443,15 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [creatorChapterNames, setCreatorChapterNames] = useState<string[]>(["Introduction"]);
   const [creatorNewChapterName, setCreatorNewChapterName] = useState("");
   const [creatorFileName, setCreatorFileName] = useState("");
+  const [creatorCourses, setCreatorCourses] = useState<Array<{
+    id: string;
+    productIds: string[];
+    title: string;
+    description: string;
+    chapters: string[];
+    updatedAt: string;
+  }>>([]);
+  const [editingCreatorCourseId, setEditingCreatorCourseId] = useState<string | null>(null);
 
   const creatorAppMeta: Record<CreatorAppId, { title: string; description: string; icon: string }> = {
     telegram: { title: "Telegram", description: "Canal ou groupe Telegram lié à un ou plusieurs produits.", icon: "✈️" },
@@ -464,11 +473,48 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
   const continueCreatorAppContent = () => {
     if (!selectedCreatorApp || linkedCreatorProductIds.length === 0) return;
+    if (selectedCreatorApp === "courses") {
+      const saved = JSON.parse(localStorage.getItem(`mansa_creator_courses_${companyId}`) || "[]");
+      setCreatorCourses(Array.isArray(saved) ? saved : []);
+      setEditingCreatorCourseId(null);
+    }
     setCreatorAppStep("content");
+  };
+
+  const startNewCreatorCourse = () => {
+    setEditingCreatorCourseId("new");
+    setCreatorCourseName("");
+    setCreatorCourseDescription("");
+    setCreatorChapterNames(["Introduction"]);
+    setCreatorNewChapterName("");
+  };
+
+  const editCreatorCourse = (course: (typeof creatorCourses)[number]) => {
+    setEditingCreatorCourseId(course.id);
+    setLinkedCreatorProductIds(course.productIds);
+    setCreatorCourseName(course.title);
+    setCreatorCourseDescription(course.description);
+    setCreatorChapterNames(course.chapters.length > 0 ? course.chapters : ["Introduction"]);
   };
 
   const finishCreatorAppWorkflow = () => {
     if (!selectedCreatorApp) return;
+    if (selectedCreatorApp === "courses") {
+      if (!creatorCourseName.trim()) return;
+      const course = {
+        id: editingCreatorCourseId && editingCreatorCourseId !== "new" ? editingCreatorCourseId : `course-${Date.now()}`,
+        productIds: linkedCreatorProductIds,
+        title: creatorCourseName.trim(),
+        description: creatorCourseDescription.trim(),
+        chapters: creatorChapterNames.filter(Boolean),
+        updatedAt: new Date().toISOString(),
+      };
+      const nextCourses = [...creatorCourses.filter((item) => item.id !== course.id), course];
+      setCreatorCourses(nextCourses);
+      localStorage.setItem(`mansa_creator_courses_${companyId}`, JSON.stringify(nextCourses));
+      setEditingCreatorCourseId(null);
+      return;
+    }
     const storageKey = `mansa_creator_apps_${companyId}`;
     const currentApps = JSON.parse(localStorage.getItem(storageKey) || "[]");
     const nextApp = {
@@ -4141,6 +4187,33 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
               <div className="space-y-4 p-5">
                 {(selectedCreatorApp === "courses" || selectedCreatorApp === "files") && (
                   <>
+                    {selectedCreatorApp === "courses" && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-sm font-bold text-white">Cours du produit</h3>
+                            <p className="mt-1 text-[11px] text-zinc-500">Créez plusieurs cours et rattachez chacun aux produits concernés.</p>
+                          </div>
+                          <span className="text-[11px] text-zinc-500">{creatorCourses.filter((course) => course.productIds.some((id) => linkedCreatorProductIds.includes(id))).length} cours</span>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <button type="button" onClick={startNewCreatorCourse} className="flex min-h-36 flex-col items-center justify-center rounded-xl border border-dashed border-white/20 bg-[#0c0d0e] text-zinc-400 transition-colors hover:border-blue-500/60 hover:bg-blue-500/5 hover:text-white">
+                            <span className="mb-2 flex size-10 items-center justify-center rounded-full border border-white/15 text-2xl">+</span>
+                            <span className="text-sm font-semibold">Ajouter un cours</span>
+                          </button>
+                          {creatorCourses.filter((course) => course.productIds.some((id) => linkedCreatorProductIds.includes(id))).map((course) => (
+                            <button type="button" key={course.id} onClick={() => editCreatorCourse(course)} className={`min-h-36 rounded-xl border p-4 text-left transition-colors ${editingCreatorCourseId === course.id ? "border-blue-500/60 bg-blue-500/10" : "border-white/10 bg-[#0c0d0e] hover:border-white/25"}`}>
+                              <div className="flex items-start justify-between gap-2"><span className="flex size-9 items-center justify-center rounded-lg bg-purple-500/15 text-lg">🎓</span><PenLine className="size-3.5 text-zinc-500" /></div>
+                              <div className="mt-4 line-clamp-2 text-sm font-bold text-white">{course.title || "Cours sans titre"}</div>
+                              <div className="mt-1 text-[11px] text-zinc-500">{course.chapters.length} chapitre(s) · Modifier</div>
+                            </button>
+                          ))}
+                        </div>
+                        {!editingCreatorCourseId && <div className="rounded-xl border border-white/10 bg-[#0c0d0e] px-4 py-3 text-xs text-zinc-400">Sélectionnez un cours existant ou cliquez sur <strong className="text-white">Ajouter un cours</strong> pour ouvrir son éditeur.</div>}
+                      </div>
+                    )}
+                    {selectedCreatorApp !== "courses" || editingCreatorCourseId ? (
+                    <>
                     <label className="block space-y-1.5">
                       <span className="text-xs font-semibold text-zinc-300">{selectedCreatorApp === "courses" ? "Nom du cours" : "Nom du fichier"}</span>
                       <input value={selectedCreatorApp === "courses" ? creatorCourseName : creatorFileName} onChange={(event) => selectedCreatorApp === "courses" ? setCreatorCourseName(event.target.value) : setCreatorFileName(event.target.value)} placeholder={selectedCreatorApp === "courses" ? "Ex. Formation Trading débutant" : "Ex. Guide PDF premium"} className="w-full rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" />
@@ -4157,6 +4230,8 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     ) : (
                       <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Contenu du fichier</span><input type="file" className="block w-full rounded-xl border border-dashed border-white/20 bg-[#0c0d0e] px-3 py-5 text-xs text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white" /></label>
                     )}
+                    </>
+                    ) : null}
                   </>
                 )}
                 {(selectedCreatorApp === "telegram" || selectedCreatorApp === "discord") && (
