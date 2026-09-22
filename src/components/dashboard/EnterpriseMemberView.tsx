@@ -440,6 +440,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [linkedCreatorProductIds, setLinkedCreatorProductIds] = useState<string[]>([]);
   const [creatorCourseName, setCreatorCourseName] = useState("");
   const [creatorCourseDescription, setCreatorCourseDescription] = useState("");
+  const [creatorCourseCoverFileName, setCreatorCourseCoverFileName] = useState("");
   const [creatorYoutubeUrl, setCreatorYoutubeUrl] = useState("");
   const [creatorVideoFileName, setCreatorVideoFileName] = useState("");
   const [creatorAttachmentFileName, setCreatorAttachmentFileName] = useState("");
@@ -451,6 +452,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     productIds: string[];
     title: string;
     description: string;
+    coverFileName?: string;
     youtubeUrl?: string;
     videoFileName?: string;
     attachmentFileName?: string;
@@ -458,6 +460,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     updatedAt: string;
   }>>([]);
   const [editingCreatorCourseId, setEditingCreatorCourseId] = useState<string | null>(null);
+  const [courseCreationStep, setCourseCreationStep] = useState<"library" | "details" | "content">("library");
 
   const creatorAppMeta: Record<CreatorAppId, { title: string; description: string; icon: string }> = {
     telegram: { title: "Telegram", description: "Canal ou groupe Telegram lié à un ou plusieurs produits.", icon: "✈️" },
@@ -483,6 +486,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
       const saved = JSON.parse(localStorage.getItem(`mansa_creator_courses_${companyId}`) || "[]");
       setCreatorCourses(Array.isArray(saved) ? saved : []);
       setEditingCreatorCourseId(null);
+      setCourseCreationStep("library");
     }
     setCreatorAppStep("content");
   };
@@ -491,6 +495,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     setEditingCreatorCourseId("new");
     setCreatorCourseName("");
     setCreatorCourseDescription("");
+    setCreatorCourseCoverFileName("");
     setCreatorYoutubeUrl("");
     setCreatorVideoFileName("");
     setCreatorAttachmentFileName("");
@@ -503,10 +508,17 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     setLinkedCreatorProductIds(course.productIds);
     setCreatorCourseName(course.title);
     setCreatorCourseDescription(course.description);
+    setCreatorCourseCoverFileName(course.coverFileName || "");
     setCreatorYoutubeUrl(course.youtubeUrl || "");
     setCreatorVideoFileName(course.videoFileName || "");
     setCreatorAttachmentFileName(course.attachmentFileName || "");
     setCreatorChapterNames(course.chapters.length > 0 ? course.chapters : ["Introduction"]);
+    setCourseCreationStep("details");
+  };
+
+  const continueCourseDetails = () => {
+    if (!creatorCourseName.trim() || !creatorCourseDescription.trim()) return;
+    setCourseCreationStep("content");
   };
 
   const finishCreatorAppWorkflow = () => {
@@ -518,6 +530,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         productIds: linkedCreatorProductIds,
         title: creatorCourseName.trim(),
         description: creatorCourseDescription.trim(),
+        coverFileName: creatorCourseCoverFileName,
         youtubeUrl: creatorYoutubeUrl.trim(),
         videoFileName: creatorVideoFileName,
         attachmentFileName: creatorAttachmentFileName,
@@ -528,6 +541,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
       setCreatorCourses(nextCourses);
       localStorage.setItem(`mansa_creator_courses_${companyId}`, JSON.stringify(nextCourses));
       setEditingCreatorCourseId(null);
+      setCourseCreationStep("library");
       return;
     }
     const storageKey = `mansa_creator_apps_${companyId}`;
@@ -4202,7 +4216,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
               <div className="space-y-4 p-5">
                 {(selectedCreatorApp === "courses" || selectedCreatorApp === "files") && (
                   <>
-                    {selectedCreatorApp === "courses" && (
+                    {selectedCreatorApp === "courses" && courseCreationStep === "library" && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <div>
@@ -4227,15 +4241,26 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                         {!editingCreatorCourseId && <div className="rounded-xl border border-white/10 bg-[#0c0d0e] px-4 py-3 text-xs text-zinc-400">Sélectionnez un cours existant ou cliquez sur <strong className="text-white">Ajouter un cours</strong> pour ouvrir son éditeur.</div>}
                       </div>
                     )}
-                    {selectedCreatorApp !== "courses" || editingCreatorCourseId ? (
+                    {selectedCreatorApp === "courses" && courseCreationStep === "details" && (
+                      <div className="space-y-4 rounded-xl border border-white/10 bg-[#0c0d0e] p-4">
+                        <div>
+                          <h3 className="text-sm font-bold text-white">Informations du cours</h3>
+                          <p className="mt-1 text-[11px] text-zinc-500">Définissez les informations principales avant d’ajouter les vidéos et les chapitres.</p>
+                        </div>
+                        <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Nom du cours</span><input value={creatorCourseName} onChange={(event) => setCreatorCourseName(event.target.value)} placeholder="Ex. Formation Trading débutant" className="w-full rounded-xl border border-white/10 bg-[#161822] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
+                        <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Description</span><textarea value={creatorCourseDescription} onChange={(event) => setCreatorCourseDescription(event.target.value)} rows={4} placeholder="Présentez le contenu et les objectifs du cours" className="w-full resize-none rounded-xl border border-white/10 bg-[#161822] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
+                        <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Miniature ou couverture</span><input type="file" accept="image/*" onChange={(event) => setCreatorCourseCoverFileName(event.target.files?.[0]?.name || "")} className="block w-full rounded-xl border border-dashed border-white/20 bg-[#161822] px-3 py-4 text-xs text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white" />{creatorCourseCoverFileName && <span className="block truncate text-[10px] text-emerald-400">{creatorCourseCoverFileName}</span>}</label>
+                        <div className="flex items-center justify-between border-t border-white/10 pt-4"><button type="button" onClick={() => setCourseCreationStep("library")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour aux cours</button><button type="button" disabled={!creatorCourseName.trim() || !creatorCourseDescription.trim()} onClick={continueCourseDetails} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40">Valider et continuer</button></div>
+                      </div>
+                    )}
+                    {selectedCreatorApp !== "courses" || (editingCreatorCourseId && courseCreationStep === "content") ? (
                     <>
-                    <label className="block space-y-1.5">
+                    {selectedCreatorApp !== "courses" && <label className="block space-y-1.5">
                       <span className="text-xs font-semibold text-zinc-300">{selectedCreatorApp === "courses" ? "Nom du cours" : "Nom du fichier"}</span>
                       <input value={selectedCreatorApp === "courses" ? creatorCourseName : creatorFileName} onChange={(event) => selectedCreatorApp === "courses" ? setCreatorCourseName(event.target.value) : setCreatorFileName(event.target.value)} placeholder={selectedCreatorApp === "courses" ? "Ex. Formation Trading débutant" : "Ex. Guide PDF premium"} className="w-full rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" />
-                    </label>
+                    </label>}
                     {selectedCreatorApp === "courses" ? (
                       <>
-                        <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Description</span><textarea value={creatorCourseDescription} onChange={(event) => setCreatorCourseDescription(event.target.value)} rows={3} className="w-full resize-none rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
                         <div className="grid gap-3 md:grid-cols-2">
                           <label className="block space-y-1.5 md:col-span-2"><span className="text-xs font-semibold text-zinc-300">Intégrer une vidéo YouTube</span><input type="url" value={creatorYoutubeUrl} onChange={(event) => setCreatorYoutubeUrl(event.target.value)} placeholder="Collez un lien YouTube" className="w-full rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
                           <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Uploader une vidéo</span><input type="file" accept="video/*" onChange={(event) => setCreatorVideoFileName(event.target.files?.[0]?.name || "")} className="block w-full rounded-xl border border-dashed border-white/20 bg-[#0c0d0e] px-3 py-3 text-xs text-zinc-400 file:mr-2 file:rounded-lg file:border-0 file:bg-purple-600 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-white" />{creatorVideoFileName && <span className="block truncate text-[10px] text-emerald-400">{creatorVideoFileName}</span>}</label>
@@ -4261,7 +4286,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     <p className="mt-1 text-xs text-zinc-400">Les produits sélectionnés sont enregistrés. Continuez la connexion du canal ou du serveur depuis l’onglet correspondant de cette entreprise.</p>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-t border-white/10 pt-4"><button type="button" onClick={() => setCreatorAppStep("link")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour</button><button type="button" onClick={finishCreatorAppWorkflow} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500">Enregistrer dans cette entreprise</button></div>
+                {(!selectedCreatorApp || selectedCreatorApp !== "courses" || courseCreationStep === "content") && <div className="flex items-center justify-between border-t border-white/10 pt-4"><button type="button" onClick={() => setCreatorAppStep("link")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour</button><button type="button" onClick={finishCreatorAppWorkflow} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500">Enregistrer dans cette entreprise</button></div>}
               </div>
             )}
           </div>
