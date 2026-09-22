@@ -445,6 +445,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [creatorVideoFileName, setCreatorVideoFileName] = useState("");
   const [creatorAttachmentFileName, setCreatorAttachmentFileName] = useState("");
   const [creatorChapterNames, setCreatorChapterNames] = useState<string[]>(["Introduction"]);
+  const [creatorChapterContents, setCreatorChapterContents] = useState<string[]>([""]);
   const [creatorNewChapterName, setCreatorNewChapterName] = useState("");
   const [creatorFileName, setCreatorFileName] = useState("");
   const [creatorCourses, setCreatorCourses] = useState<Array<{
@@ -457,6 +458,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     videoFileName?: string;
     attachmentFileName?: string;
     chapters: string[];
+    chapterContents?: string[];
     updatedAt: string;
   }>>([]);
   const [editingCreatorCourseId, setEditingCreatorCourseId] = useState<string | null>(null);
@@ -501,6 +503,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     setCreatorVideoFileName("");
     setCreatorAttachmentFileName("");
     setCreatorChapterNames(["Introduction"]);
+    setCreatorChapterContents([""]);
     setCreatorNewChapterName("");
   };
 
@@ -514,6 +517,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     setCreatorVideoFileName(course.videoFileName || "");
     setCreatorAttachmentFileName(course.attachmentFileName || "");
     setCreatorChapterNames(course.chapters.length > 0 ? course.chapters : ["Introduction"]);
+    setCreatorChapterContents(course.chapterContents?.length === course.chapters.length ? course.chapterContents : course.chapters.map(() => ""));
     setCourseCreationStep("details");
   };
 
@@ -536,6 +540,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         videoFileName: creatorVideoFileName,
         attachmentFileName: creatorAttachmentFileName,
         chapters: creatorChapterNames.filter(Boolean),
+        chapterContents: creatorChapterNames.map((_, index) => creatorChapterContents[index] || ""),
         updatedAt: new Date().toISOString(),
       };
       const nextCourses = [...creatorCourses.filter((item) => item.id !== course.id), course];
@@ -4269,8 +4274,8 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                         </div>
                         <div className="rounded-xl border border-white/10 bg-[#0c0d0e] p-4">
                           <div className="mb-3 flex items-center justify-between"><span className="text-xs font-semibold text-white">Chapitres</span><span className="text-[10px] text-zinc-500">YouTube · vidéo · pièces jointes · texte</span></div>
-                          <div className="space-y-2">{creatorChapterNames.map((chapter, index) => <div key={`${chapter}-${index}`} className="flex items-center gap-2"><input value={chapter} onChange={(event) => setCreatorChapterNames((chapters) => chapters.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#161822] px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={() => setCreatorChapterNames((chapters) => chapters.filter((_, itemIndex) => itemIndex !== index))} className="rounded-lg p-2 text-zinc-500 hover:bg-white/5 hover:text-red-300"><X className="size-3.5" /></button></div>)}</div>
-                          <div className="mt-3 flex gap-2"><input value={creatorNewChapterName} onChange={(event) => setCreatorNewChapterName(event.target.value)} placeholder="Nom du nouveau chapitre" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#161822] px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={() => { if (creatorNewChapterName.trim()) { setCreatorChapterNames((chapters) => [...chapters, creatorNewChapterName.trim()]); setCreatorNewChapterName(""); } }} className="rounded-lg bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/15">+ Chapitre</button></div>
+                          <div className="space-y-3">{creatorChapterNames.map((chapter, index) => <div key={`${chapter}-${index}`} className="rounded-xl border border-white/10 bg-[#161822] p-3"><div className="flex items-center gap-2"><input value={chapter} onChange={(event) => setCreatorChapterNames((chapters) => chapters.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} placeholder="Nom du chapitre" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0c0d0e] px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={() => { setCreatorChapterNames((chapters) => chapters.filter((_, itemIndex) => itemIndex !== index)); setCreatorChapterContents((contents) => contents.filter((_, itemIndex) => itemIndex !== index)); }} className="rounded-lg p-2 text-zinc-500 hover:bg-white/5 hover:text-red-300"><X className="size-3.5" /></button></div><textarea value={creatorChapterContents[index] || ""} onChange={(event) => setCreatorChapterContents((contents) => contents.map((content, contentIndex) => contentIndex === index ? event.target.value : content))} rows={5} placeholder="Écrivez le contenu texte de ce chapitre..." className="mt-2 w-full resize-y rounded-lg border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-xs leading-relaxed text-white outline-none focus:border-blue-500" /></div>)}</div>
+                          <div className="mt-3 flex gap-2"><input value={creatorNewChapterName} onChange={(event) => setCreatorNewChapterName(event.target.value)} placeholder="Nom du nouveau chapitre" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#161822] px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={() => { if (creatorNewChapterName.trim()) { setCreatorChapterNames((chapters) => [...chapters, creatorNewChapterName.trim()]); setCreatorChapterContents((contents) => [...contents, ""]); setCreatorNewChapterName(""); } }} className="rounded-lg bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/15">+ Chapitre</button></div>
                         </div>
                       </>
                     ) : (
