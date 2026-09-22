@@ -493,6 +493,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
   const startNewCreatorCourse = () => {
     setEditingCreatorCourseId("new");
+    setCourseCreationStep("details");
     setCreatorCourseName("");
     setCreatorCourseDescription("");
     setCreatorCourseCoverFileName("");
