@@ -484,6 +484,22 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
   const continueCreatorAppContent = () => {
     if (!selectedCreatorApp || linkedCreatorProductIds.length === 0) return;
+    if (selectedCreatorApp === "telegram" || selectedCreatorApp === "discord") {
+      const linksKey = `mansa_creator_app_links_${companyId}`;
+      const savedLinks = JSON.parse(localStorage.getItem(linksKey) || "[]");
+      const nextLink = { appId: selectedCreatorApp, productIds: linkedCreatorProductIds, updatedAt: new Date().toISOString() };
+      const withoutCurrent = Array.isArray(savedLinks) ? savedLinks.filter((item: { appId?: string }) => item.appId !== selectedCreatorApp) : [];
+      localStorage.setItem(linksKey, JSON.stringify([...withoutCurrent, nextLink]));
+      setCreatorAppStep("closed");
+      if (selectedCreatorApp === "telegram") {
+        setActiveTab("telegram");
+        setTelegramFlowStep("channels_list");
+      } else {
+        setActiveTab("discord");
+        setDiscordFlowStep("channels_list");
+      }
+      return;
+    }
     if (selectedCreatorApp === "courses") {
       const saved = JSON.parse(localStorage.getItem(`mansa_creator_courses_${companyId}`) || "[]");
       setCreatorCourses(Array.isArray(saved) ? saved : []);
@@ -4213,7 +4229,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                 </div>
                 <div className="flex items-center justify-between border-t border-white/10 pt-4">
                   <button type="button" onClick={() => setCreatorAppStep("choose")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour</button>
-                  <button type="button" disabled={linkedCreatorProductIds.length === 0} onClick={continueCreatorAppContent} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40">Fait · Ajouter le contenu</button>
+                  <button type="button" disabled={linkedCreatorProductIds.length === 0} onClick={continueCreatorAppContent} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40">{selectedCreatorApp === "courses" || selectedCreatorApp === "files" ? "Fait · Ajouter le contenu" : `Continuer vers ${selectedCreatorApp === "telegram" ? "Telegram" : "Discord"}`}</button>
                 </div>
               </div>
             )}
