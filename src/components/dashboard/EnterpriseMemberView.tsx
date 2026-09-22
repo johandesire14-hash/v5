@@ -440,6 +440,9 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [linkedCreatorProductIds, setLinkedCreatorProductIds] = useState<string[]>([]);
   const [creatorCourseName, setCreatorCourseName] = useState("");
   const [creatorCourseDescription, setCreatorCourseDescription] = useState("");
+  const [creatorYoutubeUrl, setCreatorYoutubeUrl] = useState("");
+  const [creatorVideoFileName, setCreatorVideoFileName] = useState("");
+  const [creatorAttachmentFileName, setCreatorAttachmentFileName] = useState("");
   const [creatorChapterNames, setCreatorChapterNames] = useState<string[]>(["Introduction"]);
   const [creatorNewChapterName, setCreatorNewChapterName] = useState("");
   const [creatorFileName, setCreatorFileName] = useState("");
@@ -448,6 +451,9 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     productIds: string[];
     title: string;
     description: string;
+    youtubeUrl?: string;
+    videoFileName?: string;
+    attachmentFileName?: string;
     chapters: string[];
     updatedAt: string;
   }>>([]);
@@ -485,6 +491,9 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     setEditingCreatorCourseId("new");
     setCreatorCourseName("");
     setCreatorCourseDescription("");
+    setCreatorYoutubeUrl("");
+    setCreatorVideoFileName("");
+    setCreatorAttachmentFileName("");
     setCreatorChapterNames(["Introduction"]);
     setCreatorNewChapterName("");
   };
@@ -494,6 +503,9 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     setLinkedCreatorProductIds(course.productIds);
     setCreatorCourseName(course.title);
     setCreatorCourseDescription(course.description);
+    setCreatorYoutubeUrl(course.youtubeUrl || "");
+    setCreatorVideoFileName(course.videoFileName || "");
+    setCreatorAttachmentFileName(course.attachmentFileName || "");
     setCreatorChapterNames(course.chapters.length > 0 ? course.chapters : ["Introduction"]);
   };
 
@@ -506,6 +518,9 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         productIds: linkedCreatorProductIds,
         title: creatorCourseName.trim(),
         description: creatorCourseDescription.trim(),
+        youtubeUrl: creatorYoutubeUrl.trim(),
+        videoFileName: creatorVideoFileName,
+        attachmentFileName: creatorAttachmentFileName,
         chapters: creatorChapterNames.filter(Boolean),
         updatedAt: new Date().toISOString(),
       };
@@ -4221,6 +4236,11 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     {selectedCreatorApp === "courses" ? (
                       <>
                         <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Description</span><textarea value={creatorCourseDescription} onChange={(event) => setCreatorCourseDescription(event.target.value)} rows={3} className="w-full resize-none rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <label className="block space-y-1.5 md:col-span-2"><span className="text-xs font-semibold text-zinc-300">Intégrer une vidéo YouTube</span><input type="url" value={creatorYoutubeUrl} onChange={(event) => setCreatorYoutubeUrl(event.target.value)} placeholder="Collez un lien YouTube" className="w-full rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
+                          <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Uploader une vidéo</span><input type="file" accept="video/*" onChange={(event) => setCreatorVideoFileName(event.target.files?.[0]?.name || "")} className="block w-full rounded-xl border border-dashed border-white/20 bg-[#0c0d0e] px-3 py-3 text-xs text-zinc-400 file:mr-2 file:rounded-lg file:border-0 file:bg-purple-600 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-white" />{creatorVideoFileName && <span className="block truncate text-[10px] text-emerald-400">{creatorVideoFileName}</span>}</label>
+                          <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Uploader une pièce jointe</span><input type="file" onChange={(event) => setCreatorAttachmentFileName(event.target.files?.[0]?.name || "")} className="block w-full rounded-xl border border-dashed border-white/20 bg-[#0c0d0e] px-3 py-3 text-xs text-zinc-400 file:mr-2 file:rounded-lg file:border-0 file:bg-blue-600 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-white" />{creatorAttachmentFileName && <span className="block truncate text-[10px] text-emerald-400">{creatorAttachmentFileName}</span>}</label>
+                        </div>
                         <div className="rounded-xl border border-white/10 bg-[#0c0d0e] p-4">
                           <div className="mb-3 flex items-center justify-between"><span className="text-xs font-semibold text-white">Chapitres</span><span className="text-[10px] text-zinc-500">YouTube · vidéo · pièces jointes · texte</span></div>
                           <div className="space-y-2">{creatorChapterNames.map((chapter, index) => <div key={`${chapter}-${index}`} className="flex items-center gap-2"><input value={chapter} onChange={(event) => setCreatorChapterNames((chapters) => chapters.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#161822] px-3 py-2 text-xs text-white outline-none" /><button type="button" onClick={() => setCreatorChapterNames((chapters) => chapters.filter((_, itemIndex) => itemIndex !== index))} className="rounded-lg p-2 text-zinc-500 hover:bg-white/5 hover:text-red-300"><X className="size-3.5" /></button></div>)}</div>
